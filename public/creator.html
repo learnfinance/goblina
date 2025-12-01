@@ -603,12 +603,17 @@
           </select>
           <div id="saved-character-preview" class="hidden" style="padding: 12px; border-radius: 10px; background: rgba(52, 211, 153, 0.1); border: 1px solid var(--accent-green); margin-bottom: 16px;">
             <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="font-size: 2rem;">👤</span>
-              <div>
+              <img id="selected-char-image" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; display: none;" />
+              <span id="selected-char-emoji" style="font-size: 2rem;">👤</span>
+              <div style="flex: 1;">
                 <div id="selected-char-name" style="font-weight: 600;"></div>
                 <div id="selected-char-style" style="font-size: 0.8rem; color: var(--text-muted);"></div>
               </div>
             </div>
+            <!-- NEXT BUTTON for saved character -->
+            <button id="continue-with-saved-char" class="btn btn-primary" style="margin-top: 16px; width: 100%;">
+              Continue with This Character →
+            </button>
           </div>
         </div>
 
@@ -868,6 +873,16 @@
 
       // Handle saved character selection
       document.getElementById('saved-character-select').addEventListener('change', handleSavedCharacterSelect);
+      
+      // Continue button for saved character
+      document.getElementById('continue-with-saved-char').addEventListener('click', () => {
+        if (characterProfile) {
+          goToStep(2);
+          loadPersonalityPresets();
+        } else {
+          alert('Please select a character first');
+        }
+      });
 
       function handleSavedCharacterSelect() {
         const select = document.getElementById('saved-character-select');
@@ -886,13 +901,27 @@
             characterProfile = {
               id: char.id,
               name: char.name,
-              styleGuide: styleGuide
+              styleGuide: styleGuide,
+              imageUrl: char.image_url
             };
 
             // Show preview
             document.getElementById('selected-char-name').textContent = char.name;
             document.getElementById('selected-char-style').textContent = 
               styleGuide?.character?.visualStyle || 'Style analyzed';
+            
+            // Show image if available
+            const charImage = document.getElementById('selected-char-image');
+            const charEmoji = document.getElementById('selected-char-emoji');
+            if (char.image_url) {
+              charImage.src = char.image_url;
+              charImage.style.display = 'block';
+              charEmoji.style.display = 'none';
+            } else {
+              charImage.style.display = 'none';
+              charEmoji.style.display = 'block';
+            }
+            
             preview.classList.remove('hidden');
             
             // Hide upload section
@@ -1325,8 +1354,12 @@
         const status = document.getElementById('generation-status');
         const error = document.getElementById('generation-error');
 
-        if (!characterImageFile) {
-          error.textContent = 'Character image not found. Please go back and upload character image.';
+        // Check if we have either a file upload OR a saved character with image URL
+        const hasImageFile = !!characterImageFile;
+        const hasImageUrl = characterProfile?.imageUrl;
+        
+        if (!hasImageFile && !hasImageUrl) {
+          error.textContent = 'Character image not found. Please go back and upload a character image or select a saved character with an image.';
           error.classList.remove('hidden');
           return;
         }
@@ -1380,10 +1413,16 @@
 
             // Create form data with video settings
             const formData = new FormData();
-            formData.append('image', characterImageFile);
             formData.append('prompt', scene.prompt || scene.sceneDescription);
             formData.append('seconds', videoSettings.duration);
             formData.append('size', videoSettings.aspectRatio);
+            
+            // Either use uploaded file or image URL from saved character
+            if (characterImageFile) {
+              formData.append('image', characterImageFile);
+            } else if (characterProfile?.imageUrl) {
+              formData.append('imageUrl', characterProfile.imageUrl);
+            }
 
             // Start generation
             const generateRes = await fetch('/api/generate', {

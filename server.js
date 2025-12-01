@@ -984,24 +984,59 @@ async function callOpenAIVideoCreate({ prompt, model, seconds, size, imagePath, 
   return response.json();
 }
 
-// Image upload + generate route
+// Image upload + generate route (supports file upload OR image URL)
 app.post('/api/generate', upload.single('image'), async (req, res) => {
   let processedImagePath = null;
+  let tempImagePath = null; // For URL-fetched images
   try {
     // Check if OpenAI is configured
     if (!hasOpenAI) {
       return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
     }
 
-    const { prompt, model, seconds, size } = req.body;
+    const { prompt, model, seconds, size, imageUrl } = req.body;
     const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ error: 'Image file is required.' });
+    // Either file upload or imageUrl is required
+    if (!file && !imageUrl) {
+      return res.status(400).json({ error: 'Image file or image URL is required.' });
+    }
+
+    let imagePath, imageMimeType, imageOriginalName;
+
+    if (file) {
+      // Use uploaded file
+      imagePath = file.path;
+      imageMimeType = file.mimetype;
+      imageOriginalName = file.originalname;
+    } else if (imageUrl) {
+      // Fetch image from URL (e.g., Cloudinary)
+      try {
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+        }
+        
+        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        
+        // Determine mime type from URL or response
+        const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+        const extension = contentType.includes('png') ? 'png' : contentType.includes('webp') ? 'webp' : 'jpg';
+        
+        tempImagePath = path.join('uploads', `fetched_${Date.now()}.${extension}`);
+        fs.writeFileSync(tempImagePath, imageBuffer);
+        
+        imagePath = tempImagePath;
+        imageMimeType = contentType;
+        imageOriginalName = `character.${extension}`;
+      } catch (fetchErr) {
+        console.error('Failed to fetch image from URL:', fetchErr);
+        return res.status(400).json({ error: 'Failed to fetch character image from URL.' });
+      }
     }
 
     // Detect image dimensions
-    const imageMetadata = await sharp(file.path).metadata();
+    const imageMetadata = await sharp(imagePath).metadata();
     const imageWidth = imageMetadata.width;
     const imageHeight = imageMetadata.height;
 
@@ -1023,15 +1058,15 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
 
     // If image dimensions don't match target, resize the image
     if (imageWidth !== targetWidth || imageHeight !== targetHeight) {
-      processedImagePath = path.join('uploads', `resized_${Date.now()}_${path.basename(file.path)}`);
-      await sharp(file.path)
+      processedImagePath = path.join('uploads', `resized_${Date.now()}_${path.basename(imagePath)}`);
+      await sharp(imagePath)
         .resize(targetWidth, targetHeight, {
           fit: 'fill',
           withoutEnlargement: false
         })
         .toFile(processedImagePath);
     } else {
-      processedImagePath = file.path;
+      processedImagePath = imagePath;
     }
 
     const videoJob = await callOpenAIVideoCreate({
@@ -1040,13 +1075,14 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
       seconds: seconds || 8,
       size: targetSize,
       imagePath: processedImagePath,
-      imageMime: file.mimetype,
-      imageOriginalName: file.originalname
+      imageMime: imageMimeType,
+      imageOriginalName: imageOriginalName
     });
 
     // Clean up uploaded files asynchronously
-    fs.unlink(file.path, () => {});
-    if (processedImagePath !== file.path) {
+    if (file?.path) fs.unlink(file.path, () => {});
+    if (tempImagePath) fs.unlink(tempImagePath, () => {});
+    if (processedImagePath && processedImagePath !== imagePath) {
       fs.unlink(processedImagePath, () => {});
     }
 
@@ -1055,7 +1091,8 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
     console.error(err);
     // Clean up on error
     if (req.file?.path) fs.unlink(req.file.path, () => {});
-    if (processedImagePath && processedImagePath !== req.file?.path) {
+    if (tempImagePath) fs.unlink(tempImagePath, () => {});
+    if (processedImagePath && processedImagePath !== req.file?.path && processedImagePath !== tempImagePath) {
       fs.unlink(processedImagePath, () => {});
     }
     res.status(500).json({ error: 'Failed to start video generation', details: err.message });
