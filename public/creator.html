@@ -443,6 +443,11 @@
         margin-top: 8px;
       }
 
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
       /* Video Grid */
       .video-grid {
         display: grid;
@@ -706,7 +711,11 @@
         </div>
         <div class="wizard-step" data-step="5">
           <div class="step-number">Step 5</div>
-          <div class="step-title">Generate</div>
+          <div class="step-title">🍌 Preview Images</div>
+        </div>
+        <div class="wizard-step" data-step="6">
+          <div class="step-number">Step 6</div>
+          <div class="step-title">Generate Video</div>
         </div>
       </div>
 
@@ -1036,14 +1045,80 @@
 
         <div class="btn-group">
           <button class="btn btn-secondary" id="back-to-step-3-from-review">← Back</button>
-          <button class="btn btn-primary" id="approve-and-generate">
+          <button class="btn btn-primary" id="generate-preview-images">
+            🍌 Generate Preview Images →
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 5: Image Preview (Nano Banana) -->
+      <div class="panel hidden" id="step-5">
+        <h2>🍌 Preview Images</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+          Review and refine still images before generating videos. This helps ensure character consistency.
+        </p>
+
+        <div id="image-gen-status" class="loading hidden"></div>
+        <div id="image-gen-error" class="error-text hidden"></div>
+
+        <!-- Image Generation Settings -->
+        <div style="margin-bottom: 20px; padding: 16px; border-radius: 12px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
+          <h4 style="margin: 0 0 12px; font-size: 0.9rem; color: #ffc107;">🍌 Nano Banana Settings</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted);">Model</label>
+              <select id="nb-model" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);">
+                <option value="gemini-2.5-flash-image">⚡ Fast (Gemini Flash)</option>
+                <option value="gemini-3-pro-image-preview">🎯 Advanced (Gemini Pro)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted);">Resolution</label>
+              <select id="nb-resolution" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);">
+                <option value="1K">1K (Fast)</option>
+                <option value="2K" selected>2K (Balanced)</option>
+                <option value="4K">4K (High Quality)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted);">Use Character Reference</label>
+              <select id="nb-use-reference" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);">
+                <option value="yes" selected>Yes - Use character image</option>
+                <option value="no">No - Text only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Images Grid -->
+        <div id="preview-images-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          <!-- Images will be added here -->
+        </div>
+
+        <!-- Nano Banana Status -->
+        <div id="nb-status-panel" class="hidden" style="margin-bottom: 20px; padding: 16px; border-radius: 12px; background: rgba(91, 141, 255, 0.1); border: 1px solid rgba(91, 141, 255, 0.3);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="nb-spinner" style="width: 24px; height: 24px; border: 3px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <div>
+              <div id="nb-status-text" style="font-weight: 600;">Generating images...</div>
+              <div id="nb-progress-text" style="font-size: 0.8rem; color: var(--text-muted);">0 of 0 scenes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-to-step-4-from-preview">← Back to Prompts</button>
+          <button class="btn btn-secondary" id="regenerate-all-images" disabled>
+            🔄 Regenerate All Images
+          </button>
+          <button class="btn btn-primary" id="approve-images-generate-videos" disabled>
             ✓ Approve & Generate Videos →
           </button>
         </div>
       </div>
 
-      <!-- Step 5: Video Generation -->
-      <div class="panel hidden" id="step-5">
+      <!-- Step 6: Video Generation -->
+      <div class="panel hidden" id="step-6">
         <h2>🎥 Generate Videos</h2>
         <p style="color: var(--text-muted); margin-bottom: 16px;">
           Videos will be generated one by one. You can remix any scene before final export.
@@ -1055,7 +1130,7 @@
         <div class="video-grid" id="video-grid"></div>
 
         <div class="btn-group">
-          <button class="btn btn-secondary" id="back-to-step-4">← Back to Prompts</button>
+          <button class="btn btn-secondary" id="back-to-step-5">← Back to Images</button>
         </div>
       </div>
     </div>
@@ -1803,9 +1878,9 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
 
       // Step 4: Prompt Review
       document.getElementById('back-to-step-3-from-review').addEventListener('click', () => goToStep(3));
-      document.getElementById('approve-and-generate').addEventListener('click', () => {
+      document.getElementById('generate-preview-images').addEventListener('click', () => {
         goToStep(5);
-        startVideoGeneration();
+        startImagePreviewGeneration();
       });
 
       // Snippet copy functionality
@@ -2084,8 +2159,222 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
         });
       }
 
-      // Step 5: Video Generation
-      document.getElementById('back-to-step-4').addEventListener('click', () => goToStep(4));
+      // Step 5: Image Preview (Nano Banana)
+      let previewImages = []; // Store generated preview images
+      
+      document.getElementById('back-to-step-4-from-preview').addEventListener('click', () => goToStep(4));
+      document.getElementById('regenerate-all-images').addEventListener('click', () => startImagePreviewGeneration());
+      document.getElementById('approve-images-generate-videos').addEventListener('click', () => {
+        goToStep(6);
+        startVideoGeneration();
+      });
+
+      async function startImagePreviewGeneration() {
+        const grid = document.getElementById('preview-images-grid');
+        const status = document.getElementById('nb-status-panel');
+        const statusText = document.getElementById('nb-status-text');
+        const progressText = document.getElementById('nb-progress-text');
+        const error = document.getElementById('image-gen-error');
+        const approveBtn = document.getElementById('approve-images-generate-videos');
+        const regenerateBtn = document.getElementById('regenerate-all-images');
+
+        // Get settings
+        const model = document.getElementById('nb-model').value;
+        const resolution = document.getElementById('nb-resolution').value;
+        const useReference = document.getElementById('nb-use-reference').value === 'yes';
+
+        // Map video aspect ratio to Nano Banana format
+        const aspectRatioMap = {
+          '720x1280': '9:16',
+          '1080x1920': '9:16',
+          '1280x720': '16:9',
+          '1920x1080': '16:9',
+          '1080x1080': '1:1'
+        };
+        const aspectRatio = aspectRatioMap[videoSettings.aspectRatio] || '9:16';
+
+        // Get reference images if enabled
+        const referenceImages = [];
+        if (useReference && characterProfile?.imageUrl) {
+          referenceImages.push(characterProfile.imageUrl);
+        }
+
+        status.classList.remove('hidden');
+        statusText.textContent = 'Generating preview images...';
+        progressText.textContent = `0 of ${scenarios.length} scenes`;
+        error.classList.add('hidden');
+        grid.innerHTML = '';
+        approveBtn.disabled = true;
+        regenerateBtn.disabled = true;
+        previewImages = [];
+
+        // Generate images for each scenario
+        for (let i = 0; i < scenarios.length; i++) {
+          const scene = scenarios[i];
+          progressText.textContent = `${i + 1} of ${scenarios.length} scenes`;
+
+          // Create image card
+          const imageCard = document.createElement('div');
+          imageCard.className = 'preview-image-card';
+          imageCard.id = `preview-image-${i}`;
+          imageCard.style.cssText = 'padding: 16px; border-radius: 12px; border: 1px solid var(--border-subtle); background: rgba(15, 23, 42, 0.6);';
+          imageCard.innerHTML = `
+            <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: var(--accent);">
+              Scene ${i + 1}: ${scene.hook || scene.description || 'Untitled'}
+            </div>
+            <div class="image-container" id="image-container-${i}" style="min-height: 200px; background: #000; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); overflow: hidden;">
+              <div style="text-align: center;">
+                <div style="font-size: 2rem; animation: spin 2s linear infinite;">🍌</div>
+                <div style="margin-top: 8px;">Generating...</div>
+              </div>
+            </div>
+            <div class="image-actions" id="image-actions-${i}" style="display: none; margin-top: 8px; display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" onclick="regenerateImage(${i})" style="flex: 1;">🔄 Regenerate</button>
+            </div>
+          `;
+          grid.appendChild(imageCard);
+
+          // Generate image
+          try {
+            const prompt = scene.prompt || scene.sceneDescription || scene.description;
+            
+            const response = await fetch('/api/images/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                prompt: prompt + getVoicePromptSuffix(),
+                aspectRatio,
+                resolution,
+                referenceImages,
+                model,
+                saveToCloudinary: true
+              })
+            });
+
+            if (!response.ok) {
+              const errData = await response.json();
+              throw new Error(errData.error || errData.message || 'Failed to generate image');
+            }
+
+            const result = await response.json();
+            
+            // Store result
+            previewImages[i] = result;
+
+            // Update UI
+            const container = document.getElementById(`image-container-${i}`);
+            const imageSrc = result.imageUrl || `data:${result.mimeType};base64,${result.imageBase64}`;
+            container.innerHTML = `
+              <img src="${imageSrc}" alt="Scene ${i + 1} preview" style="width: 100%; height: auto; border-radius: 8px; cursor: pointer;" onclick="window.open('${imageSrc}', '_blank')" />
+            `;
+            
+            const actions = document.getElementById(`image-actions-${i}`);
+            actions.style.display = 'flex';
+
+          } catch (err) {
+            console.error(`Image ${i + 1} generation failed:`, err);
+            const container = document.getElementById(`image-container-${i}`);
+            container.innerHTML = `
+              <div style="text-align: center; color: var(--danger);">
+                <div style="font-size: 1.5rem;">❌</div>
+                <div style="margin-top: 8px; font-size: 0.8rem;">${err.message}</div>
+              </div>
+            `;
+          }
+
+          // Small delay between generations
+          if (i < scenarios.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+
+        // Complete
+        const successCount = previewImages.filter(Boolean).length;
+        status.classList.add('hidden');
+        
+        if (successCount > 0) {
+          approveBtn.disabled = false;
+          regenerateBtn.disabled = false;
+        }
+        
+        if (successCount < scenarios.length) {
+          error.textContent = `⚠️ ${scenarios.length - successCount} image(s) failed to generate. You can regenerate them individually.`;
+          error.classList.remove('hidden');
+        }
+      }
+
+      // Regenerate a single image
+      async function regenerateImage(idx) {
+        const container = document.getElementById(`image-container-${idx}`);
+        const scene = scenarios[idx];
+        
+        container.innerHTML = `
+          <div style="text-align: center;">
+            <div style="font-size: 2rem; animation: spin 2s linear infinite;">🍌</div>
+            <div style="margin-top: 8px;">Regenerating...</div>
+          </div>
+        `;
+
+        const model = document.getElementById('nb-model').value;
+        const resolution = document.getElementById('nb-resolution').value;
+        const useReference = document.getElementById('nb-use-reference').value === 'yes';
+        
+        const aspectRatioMap = {
+          '720x1280': '9:16',
+          '1080x1920': '9:16',
+          '1280x720': '16:9',
+          '1920x1080': '16:9',
+          '1080x1080': '1:1'
+        };
+        const aspectRatio = aspectRatioMap[videoSettings.aspectRatio] || '9:16';
+
+        const referenceImages = [];
+        if (useReference && characterProfile?.imageUrl) {
+          referenceImages.push(characterProfile.imageUrl);
+        }
+
+        try {
+          const prompt = scene.prompt || scene.sceneDescription || scene.description;
+          
+          const response = await fetch('/api/images/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: prompt + getVoicePromptSuffix(),
+              aspectRatio,
+              resolution,
+              referenceImages,
+              model,
+              saveToCloudinary: true
+            })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || errData.message || 'Failed to regenerate image');
+          }
+
+          const result = await response.json();
+          previewImages[idx] = result;
+
+          const imageSrc = result.imageUrl || `data:${result.mimeType};base64,${result.imageBase64}`;
+          container.innerHTML = `
+            <img src="${imageSrc}" alt="Scene ${idx + 1} preview" style="width: 100%; height: auto; border-radius: 8px; cursor: pointer;" onclick="window.open('${imageSrc}', '_blank')" />
+          `;
+
+        } catch (err) {
+          console.error(`Image ${idx + 1} regeneration failed:`, err);
+          container.innerHTML = `
+            <div style="text-align: center; color: var(--danger);">
+              <div style="font-size: 1.5rem;">❌</div>
+              <div style="margin-top: 8px; font-size: 0.8rem;">${err.message}</div>
+            </div>
+          `;
+        }
+      }
+
+      // Step 6: Video Generation
+      document.getElementById('back-to-step-5').addEventListener('click', () => goToStep(5));
 
       async function startVideoGeneration() {
         const grid = document.getElementById('video-grid');

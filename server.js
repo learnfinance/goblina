@@ -9,6 +9,7 @@ import FormData from 'form-data';
 import sharp from 'sharp';
 import OpenAI from 'openai';
 import { v2 as cloudinary } from 'cloudinary';
+import { GoogleGenAI } from '@google/genai';
 import * as db from './db.js';
 
 dotenv.config();
@@ -145,6 +146,129 @@ if (hasOpenAI) {
   openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+}
+
+// ==========================================
+// GOOGLE GENAI (NANO BANANA) CONFIGURATION
+// ==========================================
+const hasGoogleAI = !!process.env.GOOGLE_AI_API_KEY;
+let googleAI = null;
+
+if (hasGoogleAI) {
+  googleAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY });
+  console.log('🍌 Google AI (Nano Banana) configured - image generation enabled');
+} else {
+  console.log('⚠️ GOOGLE_AI_API_KEY not set - Nano Banana image generation disabled');
+}
+
+// Valid aspect ratios for Nano Banana
+const NANO_BANANA_ASPECT_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
+const NANO_BANANA_RESOLUTIONS = ['1K', '2K', '4K'];
+
+/**
+ * Generate image using Google's Nano Banana (Gemini Image Model)
+ * @param {object} options - Generation options
+ * @param {string} options.prompt - The image prompt
+ * @param {string} options.aspectRatio - Aspect ratio (9:16, 16:9, 1:1, etc.)
+ * @param {string} options.resolution - Resolution (1K, 2K, 4K)
+ * @param {string[]} options.referenceImages - Array of base64 images or URLs for character consistency
+ * @param {string} options.model - Model to use (gemini-2.5-flash-image or gemini-3-pro-image-preview)
+ * @returns {Promise<{imageBase64: string, mimeType: string, text?: string}>}
+ */
+async function generateNanoBananaImage(options) {
+  if (!googleAI) {
+    throw new Error('Google AI not configured. Set GOOGLE_AI_API_KEY environment variable.');
+  }
+
+  const {
+    prompt,
+    aspectRatio = '9:16',
+    resolution = '2K',
+    referenceImages = [],
+    model = 'gemini-2.5-flash-image' // Fast model by default
+  } = options;
+
+  // Validate aspect ratio
+  if (!NANO_BANANA_ASPECT_RATIOS.includes(aspectRatio)) {
+    throw new Error(`Invalid aspect ratio: ${aspectRatio}. Valid options: ${NANO_BANANA_ASPECT_RATIOS.join(', ')}`);
+  }
+
+  // Validate resolution
+  if (!NANO_BANANA_RESOLUTIONS.includes(resolution)) {
+    throw new Error(`Invalid resolution: ${resolution}. Valid options: ${NANO_BANANA_RESOLUTIONS.join(', ')}`);
+  }
+
+  // Build content parts
+  const contentParts = [prompt];
+
+  // Add reference images for character consistency (up to 5 for humans)
+  for (const refImage of referenceImages.slice(0, 5)) {
+    if (refImage.startsWith('data:')) {
+      // Base64 data URL
+      const [header, base64Data] = refImage.split(',');
+      const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/png';
+      contentParts.push({
+        inlineData: {
+          mimeType,
+          data: base64Data
+        }
+      });
+    } else if (refImage.startsWith('http')) {
+      // URL - fetch and convert to base64
+      try {
+        const response = await fetch(refImage);
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const mimeType = response.headers.get('content-type') || 'image/png';
+        contentParts.push({
+          inlineData: {
+            mimeType,
+            data: buffer.toString('base64')
+          }
+        });
+      } catch (err) {
+        console.warn('Failed to fetch reference image:', refImage, err.message);
+      }
+    }
+  }
+
+  console.log(`🍌 Generating image with Nano Banana (${model})...`);
+  console.log(`   Aspect ratio: ${aspectRatio}, Resolution: ${resolution}`);
+  console.log(`   Reference images: ${referenceImages.length}`);
+
+  const response = await googleAI.models.generateContent({
+    model,
+    contents: contentParts,
+    config: {
+      responseModalities: ['TEXT', 'IMAGE'],
+      imageConfig: {
+        aspectRatio,
+        imageSize: resolution
+      }
+    }
+  });
+
+  // Extract result
+  const result = {
+    imageBase64: null,
+    mimeType: null,
+    text: null
+  };
+
+  for (const part of response.candidates?.[0]?.content?.parts || []) {
+    if (part.text) {
+      result.text = part.text;
+    } else if (part.inlineData) {
+      result.imageBase64 = part.inlineData.data;
+      result.mimeType = part.inlineData.mimeType || 'image/png';
+    }
+  }
+
+  if (!result.imageBase64) {
+    throw new Error('No image generated. The model may have refused or returned empty.');
+  }
+
+  console.log('🍌 Image generated successfully!');
+  return result;
 }
 
 app.use(cors());
@@ -586,6 +710,228 @@ IMPORTANT: Respond with valid JSON only.`
     console.error('Scenario generation error:', err);
     res.status(500).json({ error: 'Failed to generate scenarios', details: err.message });
   }
+});
+
+// ==========================================
+// NANO BANANA IMAGE GENERATION
+// ==========================================
+
+/**
+ * Generate still images using Nano Banana (Google Gemini Image)
+ * This creates preview images for scenes before video generation
+ * 
+ * POST /api/images/generate
+ * Body: {
+ *   prompt: string - The image prompt
+ *   aspectRatio: string - '9:16', '16:9', '1:1', etc.
+ *   resolution: string - '1K', '2K', '4K'
+ *   referenceImages: string[] - Base64 or URLs of reference images for character consistency
+ *   model: string - 'gemini-2.5-flash-image' (fast) or 'gemini-3-pro-image-preview' (advanced)
+ *   saveToCloudinary: boolean - Whether to upload result to Cloudinary
+ * }
+ */
+app.post('/api/images/generate', async (req, res) => {
+  try {
+    if (!googleAI) {
+      return res.status(503).json({ 
+        error: 'Nano Banana not configured',
+        message: 'Set GOOGLE_AI_API_KEY environment variable to enable image generation.'
+      });
+    }
+
+    const {
+      prompt,
+      aspectRatio = '9:16',
+      resolution = '2K',
+      referenceImages = [],
+      model = 'gemini-2.5-flash-image',
+      saveToCloudinary: shouldSave = true
+    } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // Generate the image
+    const result = await generateNanoBananaImage({
+      prompt,
+      aspectRatio,
+      resolution,
+      referenceImages,
+      model
+    });
+
+    let cloudinaryUrl = null;
+
+    // Optionally save to Cloudinary
+    if (shouldSave && hasCloudinary && result.imageBase64) {
+      try {
+        // Upload base64 directly to Cloudinary
+        const uploadResult = await cloudinary.uploader.upload(
+          `data:${result.mimeType};base64,${result.imageBase64}`,
+          {
+            folder: 'goblina-scene-images',
+            resource_type: 'image'
+          }
+        );
+        cloudinaryUrl = uploadResult.secure_url;
+        console.log('☁️ Scene image saved to Cloudinary:', cloudinaryUrl);
+      } catch (uploadErr) {
+        console.warn('Failed to save image to Cloudinary:', uploadErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      imageBase64: result.imageBase64,
+      mimeType: result.mimeType,
+      imageUrl: cloudinaryUrl,
+      text: result.text,
+      model,
+      aspectRatio,
+      resolution
+    });
+
+  } catch (err) {
+    console.error('Image generation error:', err);
+    res.status(500).json({ 
+      error: 'Failed to generate image', 
+      details: err.message 
+    });
+  }
+});
+
+/**
+ * Generate multiple scene images in batch
+ * 
+ * POST /api/images/generate-batch
+ * Body: {
+ *   scenes: Array<{
+ *     prompt: string,
+ *     aspectRatio?: string,
+ *     resolution?: string
+ *   }>,
+ *   referenceImages: string[] - Shared reference images for all scenes
+ *   model: string
+ * }
+ */
+app.post('/api/images/generate-batch', async (req, res) => {
+  try {
+    if (!googleAI) {
+      return res.status(503).json({ 
+        error: 'Nano Banana not configured',
+        message: 'Set GOOGLE_AI_API_KEY environment variable to enable image generation.'
+      });
+    }
+
+    const {
+      scenes = [],
+      referenceImages = [],
+      model = 'gemini-2.5-flash-image',
+      aspectRatio = '9:16',
+      resolution = '2K'
+    } = req.body;
+
+    if (!scenes.length) {
+      return res.status(400).json({ error: 'At least one scene is required' });
+    }
+
+    console.log(`🍌 Generating ${scenes.length} scene images...`);
+
+    const results = [];
+    
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      console.log(`🍌 Generating scene ${i + 1}/${scenes.length}...`);
+      
+      try {
+        const result = await generateNanoBananaImage({
+          prompt: scene.prompt,
+          aspectRatio: scene.aspectRatio || aspectRatio,
+          resolution: scene.resolution || resolution,
+          referenceImages,
+          model
+        });
+
+        // Save to Cloudinary
+        let cloudinaryUrl = null;
+        if (hasCloudinary && result.imageBase64) {
+          try {
+            const uploadResult = await cloudinary.uploader.upload(
+              `data:${result.mimeType};base64,${result.imageBase64}`,
+              {
+                folder: 'goblina-scene-images',
+                resource_type: 'image'
+              }
+            );
+            cloudinaryUrl = uploadResult.secure_url;
+          } catch (uploadErr) {
+            console.warn(`Failed to save scene ${i + 1} to Cloudinary:`, uploadErr.message);
+          }
+        }
+
+        results.push({
+          index: i,
+          success: true,
+          imageBase64: result.imageBase64,
+          mimeType: result.mimeType,
+          imageUrl: cloudinaryUrl,
+          text: result.text
+        });
+      } catch (sceneErr) {
+        console.error(`Scene ${i + 1} generation failed:`, sceneErr.message);
+        results.push({
+          index: i,
+          success: false,
+          error: sceneErr.message
+        });
+      }
+
+      // Small delay between generations to avoid rate limiting
+      if (i < scenes.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    console.log(`🍌 Batch complete: ${successCount}/${scenes.length} images generated`);
+
+    res.json({
+      success: successCount > 0,
+      totalScenes: scenes.length,
+      successCount,
+      failedCount: scenes.length - successCount,
+      results,
+      model,
+      aspectRatio,
+      resolution
+    });
+
+  } catch (err) {
+    console.error('Batch image generation error:', err);
+    res.status(500).json({ 
+      error: 'Failed to generate images', 
+      details: err.message 
+    });
+  }
+});
+
+/**
+ * Check Nano Banana availability and configuration
+ * GET /api/images/status
+ */
+app.get('/api/images/status', (req, res) => {
+  res.json({
+    available: hasGoogleAI,
+    cloudinaryEnabled: hasCloudinary,
+    models: {
+      fast: 'gemini-2.5-flash-image',
+      advanced: 'gemini-3-pro-image-preview'
+    },
+    supportedAspectRatios: NANO_BANANA_ASPECT_RATIOS,
+    supportedResolutions: NANO_BANANA_RESOLUTIONS,
+    maxReferenceImages: 5
+  });
 });
 
 // ==========================================
