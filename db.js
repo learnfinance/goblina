@@ -161,6 +161,20 @@ export async function deleteCharacter(id) {
   await pool.query('DELETE FROM characters WHERE id = $1', [id]);
 }
 
+/**
+ * Update a character's image URL
+ * @param {string} id - Character ID
+ * @param {string} imageUrl - New Cloudinary image URL
+ * @returns {Promise<object>} - Updated character record
+ */
+export async function updateCharacterImage(id, imageUrl) {
+  const result = await pool.query(
+    `UPDATE characters SET image_url = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+    [imageUrl, id]
+  );
+  return result.rows[0];
+}
+
 // ==========================================
 // PROJECT OPERATIONS
 // ==========================================
