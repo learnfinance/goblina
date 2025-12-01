@@ -16,8 +16,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Basic checks
-if (!process.env.OPENAI_API_KEY) {
-  console.warn('Warning: OPENAI_API_KEY is not set. The Sora video endpoints will fail until this is configured.');
+const hasOpenAI = !!process.env.OPENAI_API_KEY;
+if (!hasOpenAI) {
+  console.warn('⚠️ OPENAI_API_KEY is not set. The Sora video endpoints will fail until this is configured.');
+} else {
+  console.log('✅ OPENAI_API_KEY found - AI features enabled');
 }
 
 // Check for database URL
@@ -28,10 +31,13 @@ if (hasDatabase) {
   console.log('⚠️ DATABASE_URL not set - running in stateless mode');
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
+// Initialize OpenAI client only if API key is present
+let openai = null;
+if (hasOpenAI) {
+  openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+}
 
 app.use(cors());
 app.use(express.json());
@@ -59,6 +65,11 @@ const upload = multer({ dest: uploadsDir });
  */
 app.post('/api/characters/analyze', upload.single('image'), async (req, res) => {
   try {
+    // Check if OpenAI is configured
+    if (!openai) {
+      return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+    }
+
     const file = req.file;
     const { characterName } = req.body;
 
@@ -195,6 +206,11 @@ app.get('/api/personalities/presets', (req, res) => {
  */
 app.post('/api/scenarios/generate', async (req, res) => {
   try {
+    // Check if OpenAI is configured
+    if (!openai) {
+      return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+    }
+
     const { 
       topic, 
       characterStyleGuide, 
@@ -408,6 +424,11 @@ const STRUCTURED_PROMPT_SCHEMA = {
  */
 app.post('/api/prompts/structured', async (req, res) => {
   try {
+    // Check if OpenAI is configured
+    if (!openai) {
+      return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+    }
+
     const { 
       topic, 
       characterStyleGuide, 
@@ -636,6 +657,11 @@ function flattenPromptToText(prompt) {
  */
 app.post('/api/storyboard', async (req, res) => {
   try {
+    // Check if OpenAI is configured
+    if (!openai) {
+      return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+    }
+
     const { story, characterStyleGuide, personalityPreset = 'genz-meme', targetDuration = 15 } = req.body;
 
     if (!story) {
@@ -783,6 +809,11 @@ async function callOpenAIVideoCreate({ prompt, model, seconds, size, imagePath, 
 app.post('/api/generate', upload.single('image'), async (req, res) => {
   let processedImagePath = null;
   try {
+    // Check if OpenAI is configured
+    if (!hasOpenAI) {
+      return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+    }
+
     const { prompt, model, seconds, size } = req.body;
     const file = req.file;
 
@@ -854,6 +885,11 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
 
 // Poll status for a given video id with retry logic
 app.get('/api/status/:id', async (req, res) => {
+  // Check if OpenAI is configured
+  if (!hasOpenAI) {
+    return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+  }
+
   const { id } = req.params;
   const maxRetries = 3;
   let lastError = null;
@@ -920,6 +956,11 @@ app.get('/api/status/:id', async (req, res) => {
 
 // Download / stream completed video
 app.get('/api/download/:id', async (req, res) => {
+  // Check if OpenAI is configured
+  if (!hasOpenAI) {
+    return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+  }
+
   try {
     const { id } = req.params;
     const variant = req.query.variant || 'video';
@@ -948,6 +989,11 @@ app.get('/api/download/:id', async (req, res) => {
 
 // Remix an existing video
 app.post('/api/remix', async (req, res) => {
+  // Check if OpenAI is configured
+  if (!hasOpenAI) {
+    return res.status(503).json({ error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' });
+  }
+
   try {
     const { videoId, prompt } = req.body;
     if (!videoId || !prompt) {
@@ -1184,12 +1230,12 @@ async function startServer() {
     }
   }
 
-  app.listen(port, () => {
+app.listen(port, () => {
     console.log(`\n🎬 Ms. Goblina Content Creator`);
     console.log(`   Server running on http://localhost:${port}`);
     console.log(`   Database: ${hasDatabase ? 'Connected' : 'Not configured'}`);
     console.log(`   OpenAI: ${process.env.OPENAI_API_KEY ? 'Configured' : 'Not configured'}\n`);
-  });
+});
 }
 
 startServer();
