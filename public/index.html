@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TEST SORA - Image to Video & Remix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05060a;
+        --panel: #111320;
+        --accent: #5b8dff;
+        --accent-soft: rgba(91, 141, 255, 0.2);
+        --border-subtle: #272b3f;
+        --text-main: #f3f4ff;
+        --text-muted: #9ca3c7;
+        --danger: #f97373;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        background: radial-gradient(circle at top, #15182b 0, #05060a 55%);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+
+      .app-shell {
+        width: 100%;
+        max-width: 1080px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .title-block h1 {
+        margin: 0;
+        font-size: 1.7rem;
+        letter-spacing: 0.03em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pill {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent-soft), rgba(255, 255, 255, 0.02));
+        border: 1px solid var(--accent-soft);
+        color: var(--text-muted);
+      }
+
+      .title-block p {
+        margin: 4px 0 0;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+        gap: 18px;
+      }
+
+      @media (max-width: 860px) {
+        main {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .panel {
+        background: radial-gradient(circle at top left, rgba(91, 141, 255, 0.08), transparent 45%),
+          radial-gradient(circle at bottom right, rgba(191, 90, 242, 0.12), transparent 50%),
+          linear-gradient(145deg, #05060a, #080b14);
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        box-shadow:
+          0 24px 60px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(255, 255, 255, 0.03);
+        padding: 16px 18px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .panel h2 span.badge {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border-radius: 999px;
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+      }
+
+      label {
+        display: block;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+        color: var(--text-muted);
+      }
+
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(10, 12, 22, 0.9);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 0.85rem;
+        outline: none;
+      }
+
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+
+      input[type="text"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(91, 141, 255, 0.4);
+      }
+
+      .field-row {
+        display: flex;
+        gap: 10px;
+      }
+
+      .field-row > div {
+        flex: 1;
+      }
+
+      .upload-zone {
+        border-radius: 12px;
+        border: 1px dashed rgba(148, 163, 255, 0.7);
+        background: radial-gradient(circle at top, rgba(91, 141, 255, 0.12), transparent 60%);
+        padding: 14px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .upload-copy {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .upload-copy strong {
+        color: var(--text-main);
+      }
+
+      .btn {
+        border-radius: 999px;
+        border: none;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #5b8dff, #bf5af2);
+        color: #ffffff;
+        box-shadow:
+          0 0 14px rgba(91, 141, 255, 0.7),
+          0 0 34px rgba(191, 90, 242, 0.5);
+      }
+
+      .btn-secondary {
+        background: rgba(15, 23, 42, 0.85);
+        color: var(--text-main);
+        border: 1px solid var(--border-subtle);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+        box-shadow: none;
+      }
+
+      .status-strip {
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 255, 0.25);
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .status-pill {
+        border-radius: 999px;
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(148, 163, 255, 0.45);
+        color: var(--text-muted);
+      }
+
+      .status-pending {
+        border-color: rgba(234, 179, 8, 0.8);
+        color: #facc15;
+      }
+
+      .status-ok {
+        border-color: rgba(52, 211, 153, 0.9);
+        color: #6ee7b7;
+      }
+
+      .status-error {
+        border-color: rgba(248, 113, 113, 0.9);
+        color: var(--danger);
+      }
+
+      .progress-bar {
+        position: relative;
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #5b8dff, #bf5af2);
+        transition: width 0.3s ease;
+      }
+
+      .video-shell {
+        border-radius: 14px;
+        overflow: hidden;
+        background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), #020617);
+        border: 1px solid rgba(15, 23, 42, 0.9);
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .video-shell video {
+        width: 100%;
+        border-radius: inherit;
+        display: block;
+        background: #000;
+      }
+
+      .video-empty {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        padding: 40px 20px;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.75rem;
+      }
+
+      .chip {
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+      }
+
+      .error-text {
+        color: var(--danger);
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(17, 19, 32, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(91, 141, 255, 0.2);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 1000;
+    ">
+      <a href="/home.html" style="
+        color: var(--text-main);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+      ">🎬 Sora Creator</a>
+      <div style="display: flex; gap: 16px; flex: 1;">
+        <a href="/creator.html" style="
+          color: var(--text-muted);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s;
+        " onmouseover="this.style.background='rgba(91,141,255,0.1)'; this.style.color='var(--accent)'" 
+           onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">
+          🧙‍♀️ Creator Wizard
+        </a>
+        <a href="/index.html" style="
+          color: var(--accent);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          background: rgba(91,141,255,0.1);
+        ">
+          ⚡ Simple Generator
+        </a>
+      </div>
+    </nav>
+
+    <div class="app-shell" style="margin-top: 60px;">
+      <header>
+        <div class="title-block">
+          <h1>
+            Simple Generator
+            <span class="pill">Sora 2 · Image → Video · Remix</span>
+          </h1>
+          <p>Upload a still, describe the motion, then iterate with targeted remixes.</p>
+        </div>
+      </header>
+
+      <main>
+        <section class="panel">
+          <h2>
+            Image to video
+            <span class="badge">Source</span>
+          </h2>
+
+          <form id="generate-form">
+            <div style="margin-bottom: 10px">
+              <label for="prompt">Prompt</label>
+              <textarea
+                id="prompt"
+                name="prompt"
+                placeholder="e.g. She turns around and smiles, then slowly walks out of the frame."
+                required
+              ></textarea>
+            </div>
+
+            <div class="field-row" style="margin-bottom: 10px">
+              <div>
+                <label for="seconds">Duration (seconds)</label>
+                <input type="text" id="seconds" name="seconds" placeholder="8" />
+              </div>
+              <div>
+                <label for="size">Size (WxH)</label>
+                <select id="size" name="size">
+                  <option value="720x1280">720x1280 (Portrait 9:16 - Instagram Reels)</option>
+                  <option value="1280x720">1280x720 (Landscape 16:9)</option>
+                  <option value="1024x1792">1024x1792 (Tall Portrait)</option>
+                  <option value="1792x1024">1792x1024 (Wide Landscape)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="upload-zone" style="margin-bottom: 10px">
+              <div class="upload-copy">
+                <strong>Reference frame</strong>
+                <div>First frame of your video. JPEG, PNG, or WebP.</div>
+              </div>
+              <div>
+                <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp" required />
+              </div>
+            </div>
+
+            <button class="btn btn-primary" type="submit" id="generate-btn">
+              <span>Generate with Sora 2</span>
+            </button>
+          </form>
+
+          <div id="generate-status" class="status-strip" style="display: none; margin-top: 10px">
+            <span id="generate-status-pill" class="status-pill status-pending">Queued</span>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+              <div id="generate-status-text">Waiting for job...</div>
+              <div class="progress-bar">
+                <div id="generate-progress-fill" class="progress-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="generate-error" class="error-text" style="display: none; margin-top: 6px"></div>
+        </section>
+
+        <section class="panel">
+          <h2>
+            Output & Remix
+            <span class="badge">Iteration</span>
+          </h2>
+
+          <div class="video-shell" id="video-shell">
+            <div class="video-empty">
+              When a job completes, you’ll see the video here and can send a targeted remix.
+            </div>
+          </div>
+
+          <div id="output-meta" style="display: none">
+            <div style="margin-top: 8px; margin-bottom: 10px" class="chip-row">
+              <span class="chip" id="meta-id"></span>
+              <span class="chip" id="meta-model"></span>
+              <span class="chip" id="meta-size"></span>
+              <span class="chip" id="meta-seconds"></span>
+            </div>
+
+            <form id="remix-form">
+              <label for="remix-prompt">Remix prompt</label>
+              <textarea
+                id="remix-prompt"
+                name="remixPrompt"
+                placeholder="e.g. Shift the color palette to teal, sand, and rust, with a warm backlight."
+              ></textarea>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px">
+                <button class="btn btn-secondary" type="submit" id="remix-btn">
+                  Remix this video
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  type="button"
+                  id="download-btn"
+                  style="background: rgba(15, 23, 42, 0.95)"
+                >
+                  Download MP4
+                </button>
+              </div>
+            </form>
+
+            <div id="remix-status" class="status-strip" style="display: none; margin-top: 10px">
+              <span id="remix-status-pill" class="status-pill status-pending">Queued</span>
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+                <div id="remix-status-text">Waiting for remix job...</div>
+                <div class="progress-bar">
+                  <div id="remix-progress-fill" class="progress-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="remix-error" class="error-text" style="display: none; margin-top: 6px"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const generateForm = document.getElementById('generate-form');
+      const generateBtn = document.getElementById('generate-btn');
+      const generateStatus = document.getElementById('generate-status');
+      const generateStatusText = document.getElementById('generate-status-text');
+      const generateStatusPill = document.getElementById('generate-status-pill');
+      const generateProgressFill = document.getElementById('generate-progress-fill');
+      const generateError = document.getElementById('generate-error');
+
+      const videoShell = document.getElementById('video-shell');
+      const outputMeta = document.getElementById('output-meta');
+      const metaId = document.getElementById('meta-id');
+      const metaModel = document.getElementById('meta-model');
+      const metaSize = document.getElementById('meta-size');
+      const metaSeconds = document.getElementById('meta-seconds');
+
+      const remixForm = document.getElementById('remix-form');
+      const remixPromptInput = document.getElementById('remix-prompt');
+      const remixBtn = document.getElementById('remix-btn');
+      const remixStatus = document.getElementById('remix-status');
+      const remixStatusText = document.getElementById('remix-status-text');
+      const remixStatusPill = document.getElementById('remix-status-pill');
+      const remixProgressFill = document.getElementById('remix-progress-fill');
+      const remixError = document.getElementById('remix-error');
+
+      const downloadBtn = document.getElementById('download-btn');
+
+      let currentVideoId = null;
+
+      function setStatus(elPill, elStrip, label, mode) {
+        elStrip.style.display = 'flex';
+        elPill.textContent = label;
+        elPill.classList.remove('status-pending', 'status-ok', 'status-error');
+        if (mode === 'pending') elPill.classList.add('status-pending');
+        if (mode === 'ok') elPill.classList.add('status-ok');
+        if (mode === 'error') elPill.classList.add('status-error');
+      }
+
+      async function pollStatus(jobId, { onUpdate }) {
+        let done = false;
+        let errorCount = 0;
+        const maxErrors = 5;
+        
+        while (!done) {
+          try {
+            const res = await fetch('/api/status/' + encodeURIComponent(jobId));
+            
+            if (!res.ok) {
+              const errorData = await res.json().catch(() => ({}));
+              
+              // If it's a retryable error from OpenAI, show friendly message
+              if (errorData.retryable) {
+                console.warn('OpenAI server issue, continuing to poll...');
+                errorCount++;
+                
+                if (errorCount >= maxErrors) {
+                  throw new Error('OpenAI servers are experiencing issues. Please try again later.');
+                }
+                
+                // Wait longer before next attempt
+                await new Promise((r) => setTimeout(r, 5000));
+                continue;
+              }
+              
+              throw new Error(errorData.error || 'Failed to fetch status');
+            }
+            
+            // Reset error count on success
+            errorCount = 0;
+            
+            const json = await res.json();
+            const status = json.status;
+            const progress = json.progress ?? 0;
+
+            onUpdate({ status, progress, job: json });
+
+            if (status === 'completed' || status === 'failed') {
+              done = true;
+              return json;
+            }
+
+            await new Promise((r) => setTimeout(r, 3000));
+          } catch (err) {
+            errorCount++;
+            
+            if (errorCount >= maxErrors) {
+              throw err;
+            }
+            
+            console.warn(`Polling error (${errorCount}/${maxErrors}):`, err.message);
+            await new Promise((r) => setTimeout(r, 5000));
+          }
+        }
+      }
+
+      function renderVideo(job) {
+        currentVideoId = job.id;
+        videoShell.innerHTML =
+          '<video id="sora-video" controls playsinline poster="">' +
+          '<source src="/api/download/' +
+          encodeURIComponent(job.id) +
+          '" type="video/mp4" />' +
+          'Your browser does not support the video tag.' +
+          '</video>';
+
+        outputMeta.style.display = 'block';
+        metaId.textContent = job.id;
+        metaModel.textContent = job.model || 'sora-2';
+        metaSize.textContent = job.size || '';
+        metaSeconds.textContent = (job.seconds || '') + 's';
+      }
+
+      generateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        generateError.style.display = 'none';
+        generateBtn.disabled = true;
+        remixBtn.disabled = true;
+
+        try {
+          const formData = new FormData(generateForm);
+          generateStatus.style.display = 'flex';
+          setStatus(generateStatusPill, generateStatus, 'Queued', 'pending');
+          generateStatusText.textContent = 'Starting Sora 2 job...';
+          generateProgressFill.style.width = '0%';
+
+          const res = await fetch('/api/generate', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Failed to start video generation');
+          }
+
+          const job = await res.json();
+
+          await pollStatus(job.id, {
+            onUpdate: ({ status, progress }) => {
+              const pct = Math.max(5, progress || 5);
+              generateProgressFill.style.width = pct + '%';
+              generateStatusText.textContent =
+                status === 'queued'
+                  ? 'Queued on Sora…'
+                  : status === 'in_progress'
+                  ? 'Rendering on Sora…'
+                  : 'Finishing up…';
+              if (status === 'completed') {
+                setStatus(generateStatusPill, generateStatus, 'Completed', 'ok');
+              }
+              if (status === 'failed') {
+                setStatus(generateStatusPill, generateStatus, 'Failed', 'error');
+              }
+            }
+          }).then((finalJob) => {
+            if (finalJob.status === 'completed') {
+              renderVideo(finalJob);
+            } else {
+              throw new Error('Video generation failed');
+            }
+          });
+        } catch (err) {
+          console.error(err);
+          generateError.textContent = err.message || 'Unexpected error';
+          generateError.style.display = 'block';
+          setStatus(generateStatusPill, generateStatus, 'Error', 'error');
+        } finally {
+          generateBtn.disabled = false;
+          remixBtn.disabled = false;
+        }
+      });
+
+      remixForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        remixError.style.display = 'none';
+        if (!currentVideoId) {
+          remixError.textContent = 'Generate a video first.';
+          remixError.style.display = 'block';
+          return;
+        }
+
+        const prompt = remixPromptInput.value.trim();
+        if (!prompt) {
+          remixError.textContent = 'Enter a remix prompt describing a single clear change.';
+          remixError.style.display = 'block';
+          return;
+        }
+
+        remixBtn.disabled = true;
+
+        try {
+          setStatus(remixStatusPill, remixStatus, 'Queued', 'pending');
+          remixStatusText.textContent = 'Starting remix job…';
+          remixProgressFill.style.width = '0%';
+
+          const res = await fetch('/api/remix', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ videoId: currentVideoId, prompt })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Failed to start remix job');
+          }
+
+          const remixJob = await res.json();
+
+          await pollStatus(remixJob.id, {
+            onUpdate: ({ status, progress }) => {
+              const pct = Math.max(5, progress || 5);
+              remixProgressFill.style.width = pct + '%';
+              remixStatusText.textContent =
+                status === 'queued'
+                  ? 'Queued remix…'
+                  : status === 'in_progress'
+                  ? 'Rendering remix…'
+                  : 'Finalizing remix…';
+              if (status === 'completed') {
+                setStatus(remixStatusPill, remixStatus, 'Completed', 'ok');
+              }
+              if (status === 'failed') {
+                setStatus(remixStatusPill, remixStatus, 'Failed', 'error');
+              }
+            }
+          }).then((finalJob) => {
+            if (finalJob.status === 'completed') {
+              renderVideo(finalJob);
+            } else {
+              throw new Error('Remix failed');
+            }
+          });
+        } catch (err) {
+          console.error(err);
+          remixError.textContent = err.message || 'Unexpected remix error';
+          remixError.style.display = 'block';
+          setStatus(remixStatusPill, remixStatus, 'Error', 'error');
+        } finally {
+          remixBtn.disabled = false;
+        }
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        if (!currentVideoId) return;
+        const url = '/api/download/' + encodeURIComponent(currentVideoId);
+        window.open(url, '_blank');
+      });
+    </script>
+  </body>
+  </html>
+
+

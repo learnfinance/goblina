@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ms. Goblina Content Creator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05060a;
+        --panel: #111320;
+        --accent: #5b8dff;
+        --accent-soft: rgba(91, 141, 255, 0.2);
+        --accent-green: #34d399;
+        --border-subtle: #272b3f;
+        --text-main: #f3f4ff;
+        --text-muted: #9ca3c7;
+        --danger: #f97373;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        background: radial-gradient(circle at top, #15182b 0, #05060a 55%);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+
+      .app-shell {
+        width: 100%;
+        max-width: 1200px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .title-block h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        letter-spacing: 0.03em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pill {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent-soft), rgba(255, 255, 255, 0.02));
+        border: 1px solid var(--accent-soft);
+        color: var(--text-muted);
+      }
+
+      .title-block p {
+        margin: 4px 0 0;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      /* Wizard Steps */
+      .wizard-nav {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 8px 0;
+      }
+
+      .wizard-step {
+        flex: 1;
+        min-width: 120px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.6);
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+      }
+
+      .wizard-step.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        box-shadow: 0 0 12px rgba(91, 141, 255, 0.3);
+      }
+
+      .wizard-step.completed {
+        border-color: var(--accent-green);
+        background: rgba(52, 211, 153, 0.1);
+      }
+
+      .wizard-step .step-number {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+      }
+
+      .wizard-step .step-title {
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      /* Panel */
+      .panel {
+        background: radial-gradient(circle at top left, rgba(91, 141, 255, 0.08), transparent 45%),
+          radial-gradient(circle at bottom right, rgba(191, 90, 242, 0.12), transparent 50%),
+          linear-gradient(145deg, #05060a, #080b14);
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        box-shadow:
+          0 24px 60px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(255, 255, 255, 0.03);
+        padding: 24px;
+      }
+
+      .panel h2 {
+        margin: 0 0 16px 0;
+        font-size: 1.2rem;
+      }
+
+      /* Form Elements */
+      label {
+        display: block;
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(10, 12, 22, 0.9);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 0.9rem;
+        outline: none;
+        margin-bottom: 14px;
+      }
+
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(91, 141, 255, 0.3);
+      }
+
+      .upload-zone {
+        border-radius: 12px;
+        border: 2px dashed rgba(148, 163, 255, 0.5);
+        background: radial-gradient(circle at top, rgba(91, 141, 255, 0.12), transparent 60%);
+        padding: 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 14px;
+      }
+
+      .upload-zone:hover {
+        border-color: var(--accent);
+        background: radial-gradient(circle at top, rgba(91, 141, 255, 0.18), transparent 60%);
+      }
+
+      .upload-zone.has-file {
+        border-color: var(--accent-green);
+        background: radial-gradient(circle at top, rgba(52, 211, 153, 0.12), transparent 60%);
+      }
+
+      .character-preview {
+        max-width: 300px;
+        max-height: 300px;
+        border-radius: 12px;
+        margin: 12px auto;
+        display: block;
+      }
+
+      /* Buttons */
+      .btn {
+        border-radius: 999px;
+        border: none;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #5b8dff, #bf5af2);
+        color: #ffffff;
+        box-shadow:
+          0 0 14px rgba(91, 141, 255, 0.5),
+          0 0 34px rgba(191, 90, 242, 0.3);
+      }
+
+      .btn-primary:hover {
+        box-shadow:
+          0 0 20px rgba(91, 141, 255, 0.7),
+          0 0 40px rgba(191, 90, 242, 0.5);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: rgba(15, 23, 42, 0.85);
+        color: var(--text-main);
+        border: 1px solid var(--border-subtle);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+        box-shadow: none;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      /* Preset Cards */
+      .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .preset-card {
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.6);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .preset-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+
+      .preset-card.selected {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        box-shadow: 0 0 12px rgba(91, 141, 255, 0.3);
+      }
+
+      .preset-card h3 {
+        margin: 0 0 6px 0;
+        font-size: 0.95rem;
+      }
+
+      .preset-card p {
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      /* Scenario Cards */
+      .scenario-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .scenario-card {
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.6);
+      }
+
+      .scenario-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 1rem;
+        color: var(--accent);
+      }
+
+      .scenario-card .meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+
+      .scenario-card .dialogue {
+        font-style: italic;
+        margin: 8px 0;
+        padding: 8px;
+        background: rgba(91, 141, 255, 0.1);
+        border-left: 3px solid var(--accent);
+        border-radius: 4px;
+      }
+
+      .scenario-card .prompt {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 8px;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 6px;
+        max-height: 100px;
+        overflow-y: auto;
+      }
+
+      .prompt-editor {
+        width: 100%;
+        min-height: 120px;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(10, 12, 22, 0.9);
+        color: var(--text-main);
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        resize: vertical;
+        margin-top: 8px;
+      }
+
+      .prompt-editor:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(91, 141, 255, 0.3);
+        outline: none;
+      }
+
+      .prompt-review-card {
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.6);
+        margin-bottom: 16px;
+      }
+
+      .prompt-review-card h3 {
+        margin: 0 0 12px 0;
+        font-size: 1rem;
+        color: var(--accent);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .prompt-review-card .meta-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .prompt-review-card .meta-item {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .prompt-review-card .meta-item strong {
+        color: var(--text-main);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .expand-toggle {
+        font-size: 0.8rem;
+        color: var(--accent);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .expand-toggle:hover {
+        text-decoration: underline;
+      }
+
+      /* Status */
+      .status-pill {
+        display: inline-block;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+      }
+
+      .status-pending {
+        border-color: rgba(234, 179, 8, 0.8);
+        color: #facc15;
+      }
+
+      .status-ok {
+        border-color: rgba(52, 211, 153, 0.9);
+        color: #6ee7b7;
+      }
+
+      .status-error {
+        border-color: rgba(248, 113, 113, 0.9);
+        color: var(--danger);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-muted);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .error-text {
+        color: var(--danger);
+        font-size: 0.85rem;
+        margin-top: 8px;
+      }
+
+      /* Video Grid */
+      .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+      }
+
+      .video-card {
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.6);
+        overflow: hidden;
+      }
+
+      .video-card video {
+        width: 100%;
+        display: block;
+        background: #000;
+      }
+
+      .video-card .card-body {
+        padding: 12px;
+      }
+
+      .video-card .card-title {
+        font-size: 0.85rem;
+        margin: 0 0 6px 0;
+      }
+
+      .video-card .card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+
+      .video-container {
+        position: relative;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation Bar -->
+    <nav style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(17, 19, 32, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(91, 141, 255, 0.2);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 1000;
+    ">
+      <a href="/home.html" style="
+        color: var(--text-main);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+      ">🎬 Sora Creator</a>
+      <div style="display: flex; gap: 16px; flex: 1;">
+        <a href="/creator.html" style="
+          color: var(--accent);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          background: rgba(91,141,255,0.1);
+        ">
+          🧙‍♀️ Creator Wizard
+        </a>
+        <a href="/index.html" style="
+          color: var(--text-muted);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s;
+        " onmouseover="this.style.background='rgba(91,141,255,0.1)'; this.style.color='var(--accent)'" 
+           onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">
+          ⚡ Simple Generator
+        </a>
+      </div>
+    </nav>
+
+    <div class="app-shell" style="margin-top: 60px;">
+      <header>
+        <div class="title-block">
+          <h1>
+            🧙‍♀️ Ms. Goblina Content Creator
+            <span class="pill">Sora 2 · Gen Z Memes</span>
+          </h1>
+          <p>Create relatable Instagram content with AI-powered character consistency</p>
+        </div>
+      </header>
+
+      <!-- Wizard Navigation -->
+      <div class="wizard-nav">
+        <div class="wizard-step active" data-step="1">
+          <div class="step-number">Step 1</div>
+          <div class="step-title">Character</div>
+        </div>
+        <div class="wizard-step" data-step="2">
+          <div class="step-number">Step 2</div>
+          <div class="step-title">Personality</div>
+        </div>
+        <div class="wizard-step" data-step="3">
+          <div class="step-number">Step 3</div>
+          <div class="step-title">Topic/Story</div>
+        </div>
+        <div class="wizard-step" data-step="4">
+          <div class="step-number">Step 4</div>
+          <div class="step-title">Review Prompts</div>
+        </div>
+        <div class="wizard-step" data-step="5">
+          <div class="step-number">Step 5</div>
+          <div class="step-title">Generate</div>
+        </div>
+      </div>
+
+      <!-- Step 1: Character Setup -->
+      <div class="panel" id="step-1">
+        <h2>✨ Upload Character Image</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+          Upload an image of Ms. Goblina. AI will analyze the style and create a guide for consistent video generation.
+        </p>
+
+        <form id="character-form">
+          <label for="character-name">Character Name</label>
+          <input type="text" id="character-name" placeholder="Ms. Goblina" value="Ms. Goblina" />
+
+          <div class="upload-zone" id="character-upload-zone">
+            <div>📸 Click or drag character image here</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">JPEG, PNG, or WebP</div>
+            <input type="file" id="character-image" accept="image/jpeg,image/png,image/webp" style="display: none;" />
+            <img id="character-preview" class="character-preview hidden" />
+          </div>
+
+          <div id="character-error" class="error-text hidden"></div>
+          <div id="character-loading" class="loading hidden">🔮 Analyzing character style with Vision API...</div>
+
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary" id="analyze-btn">
+              Analyze Character Style →
+            </button>
+          </div>
+        </form>
+
+        <div id="style-guide-preview" class="hidden" style="margin-top: 20px;">
+          <h3 style="margin-bottom: 12px;">📋 Style Guide</h3>
+          <pre id="style-guide-json" style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 0.75rem;"></pre>
+        </div>
+      </div>
+
+      <!-- Step 2: Personality Preset -->
+      <div class="panel hidden" id="step-2">
+        <h2>🎭 Choose Content Personality</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+          Select the vibe and tone for your content. This affects camera work, pacing, and overall feel.
+        </p>
+
+        <div class="preset-grid" id="personality-presets"></div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-to-step-1">← Back</button>
+          <button class="btn btn-primary" id="next-to-step-3">Continue →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Topic/Story Input -->
+      <div class="panel hidden" id="step-3">
+        <h2>💭 What's Your Content About?</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+          Enter a topic or write out your full story/scenario.
+        </p>
+
+        <div style="margin-bottom: 20px;">
+          <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <input type="radio" name="input-mode" value="topic" checked />
+            Quick Topic (AI suggests scenarios)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px;">
+            <input type="radio" name="input-mode" value="story" />
+            Full Story (AI breaks into scenes)
+          </label>
+        </div>
+
+        <div id="topic-input-section">
+          <label for="topic">Topic / Struggle</label>
+          <textarea
+            id="topic"
+            placeholder='e.g., "Slack messages that start with quick question", "Micromanaging boss", "Boyfriend wants healthy food but I want fried chicken"'
+          ></textarea>
+
+          <button class="btn btn-primary" id="generate-scenarios-btn" style="margin-bottom: 20px;">
+            🎬 Generate Scenarios
+          </button>
+
+          <div id="scenarios-loading" class="loading hidden">🎨 AI is brainstorming scenarios...</div>
+          <div id="scenarios-error" class="error-text hidden"></div>
+          <div id="scenarios-list" class="scenario-list"></div>
+        </div>
+
+        <div id="story-input-section" class="hidden">
+          <label for="story">Full Story / Script</label>
+          <textarea
+            id="story"
+            placeholder="Describe the full scenario with all the action and dialogue..."
+            style="min-height: 150px;"
+          ></textarea>
+
+          <button class="btn btn-primary" id="generate-storyboard-btn" style="margin-bottom: 20px;">
+            🎬 Create Storyboard
+          </button>
+
+          <div id="storyboard-loading" class="loading hidden">🎨 AI is creating storyboard...</div>
+          <div id="storyboard-error" class="error-text hidden"></div>
+          <div id="storyboard-list" class="scenario-list"></div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-to-step-2">← Back</button>
+          <button class="btn btn-primary hidden" id="next-to-step-4">Generate Videos →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Review & Edit Prompts -->
+      <div class="panel hidden" id="step-4">
+        <h2>✏️ Review & Edit Sora Prompts</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+          Review the AI-generated prompts before sending to Sora. You can edit any prompt to fine-tune the output.
+        </p>
+
+        <div id="prompt-review-list" class="scenario-list"></div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-to-step-3-from-review">← Back</button>
+          <button class="btn btn-primary" id="approve-and-generate">
+            ✓ Approve & Generate Videos →
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 5: Video Generation -->
+      <div class="panel hidden" id="step-5">
+        <h2>🎥 Generate Videos</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+          Videos will be generated one by one. You can remix any scene before final export.
+        </p>
+
+        <div id="generation-status" class="loading hidden"></div>
+        <div id="generation-error" class="error-text hidden"></div>
+
+        <div class="video-grid" id="video-grid"></div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="back-to-step-4">← Back to Prompts</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // State
+      let characterProfile = null;
+      let characterImageFile = null; // Store the character image for reuse
+      let selectedPersonality = 'genz-meme';
+      let scenarios = [];
+      let currentStep = 1;
+
+      // Elements
+      const wizardSteps = document.querySelectorAll('.wizard-step');
+      const stepPanels = [
+        null,
+        document.getElementById('step-1'),
+        document.getElementById('step-2'),
+        document.getElementById('step-3'),
+        document.getElementById('step-4'),
+        document.getElementById('step-5')
+      ];
+
+      // Wizard Navigation
+      function goToStep(step) {
+        currentStep = step;
+        wizardSteps.forEach((el, idx) => {
+          el.classList.remove('active');
+          if (idx + 1 < step) el.classList.add('completed');
+          else el.classList.remove('completed');
+          if (idx + 1 === step) el.classList.add('active');
+        });
+
+        stepPanels.forEach((panel, idx) => {
+          if (panel) {
+            panel.classList.toggle('hidden', idx !== step);
+          }
+        });
+      }
+
+      // Step 1: Character Upload & Analysis
+      const characterUploadZone = document.getElementById('character-upload-zone');
+      const characterImageInput = document.getElementById('character-image');
+      const characterPreview = document.getElementById('character-preview');
+      const characterForm = document.getElementById('character-form');
+      const characterLoading = document.getElementById('character-loading');
+      const characterError = document.getElementById('character-error');
+      const styleGuidePreview = document.getElementById('style-guide-preview');
+      const styleGuideJson = document.getElementById('style-guide-json');
+
+      characterUploadZone.addEventListener('click', () => characterImageInput.click());
+      characterImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          characterImageFile = file; // Store for later use
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            characterPreview.src = e.target.result;
+            characterPreview.classList.remove('hidden');
+            characterUploadZone.classList.add('has-file');
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      characterForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const file = characterImageInput.files[0];
+        const name = document.getElementById('character-name').value;
+
+        if (!file) {
+          characterError.textContent = 'Please upload a character image';
+          characterError.classList.remove('hidden');
+          return;
+        }
+
+        characterError.classList.add('hidden');
+        characterLoading.classList.remove('hidden');
+        document.getElementById('analyze-btn').disabled = true;
+
+        try {
+          const formData = new FormData();
+          formData.append('image', file);
+          formData.append('characterName', name);
+
+          const res = await fetch('/api/characters/analyze', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to analyze character');
+          }
+
+          characterProfile = await res.json();
+          styleGuideJson.textContent = JSON.stringify(characterProfile.styleGuide, null, 2);
+          styleGuidePreview.classList.remove('hidden');
+
+          // Auto-advance after 2 seconds
+          setTimeout(() => {
+            goToStep(2);
+            loadPersonalityPresets();
+          }, 2000);
+        } catch (err) {
+          characterError.textContent = err.message;
+          characterError.classList.remove('hidden');
+        } finally {
+          characterLoading.classList.add('hidden');
+          document.getElementById('analyze-btn').disabled = false;
+        }
+      });
+
+      // Step 2: Personality Presets
+      async function loadPersonalityPresets() {
+        try {
+          const res = await fetch('/api/personalities/presets');
+          const presets = await res.json();
+
+          const grid = document.getElementById('personality-presets');
+          grid.innerHTML = '';
+
+          Object.entries(presets).forEach(([key, preset]) => {
+            const card = document.createElement('div');
+            card.className = 'preset-card';
+            if (key === selectedPersonality) card.classList.add('selected');
+            card.innerHTML = `
+              <h3>${key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</h3>
+              <p>${preset.description}</p>
+            `;
+            card.addEventListener('click', () => {
+              selectedPersonality = key;
+              document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+              card.classList.add('selected');
+            });
+            grid.appendChild(card);
+          });
+        } catch (err) {
+          console.error('Failed to load presets:', err);
+        }
+      }
+
+      document.getElementById('back-to-step-1').addEventListener('click', () => goToStep(1));
+      document.getElementById('next-to-step-3').addEventListener('click', () => goToStep(3));
+
+      // Step 3: Topic/Story Input
+      const inputModeRadios = document.querySelectorAll('input[name="input-mode"]');
+      const topicSection = document.getElementById('topic-input-section');
+      const storySection = document.getElementById('story-input-section');
+
+      inputModeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          if (e.target.value === 'topic') {
+            topicSection.classList.remove('hidden');
+            storySection.classList.add('hidden');
+          } else {
+            topicSection.classList.add('hidden');
+            storySection.classList.remove('hidden');
+          }
+        });
+      });
+
+      // Generate Scenarios from Topic
+      document.getElementById('generate-scenarios-btn').addEventListener('click', async () => {
+        const topic = document.getElementById('topic').value.trim();
+        if (!topic) {
+          alert('Please enter a topic');
+          return;
+        }
+
+        const loading = document.getElementById('scenarios-loading');
+        const error = document.getElementById('scenarios-error');
+        const list = document.getElementById('scenarios-list');
+
+        loading.classList.remove('hidden');
+        error.classList.add('hidden');
+        list.innerHTML = '';
+
+        try {
+          const res = await fetch('/api/scenarios/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              topic,
+              characterStyleGuide: characterProfile.styleGuide,
+              personalityPreset: selectedPersonality,
+              sceneCount: 1
+            })
+          });
+
+          if (!res.ok) throw new Error('Failed to generate scenarios');
+
+          const result = await res.json();
+          scenarios = result.scenarios || [result];
+
+          renderScenarios(scenarios, list);
+          document.getElementById('next-to-step-4').classList.remove('hidden');
+        } catch (err) {
+          error.textContent = err.message;
+          error.classList.remove('hidden');
+        } finally {
+          loading.classList.add('hidden');
+        }
+      });
+
+      // Generate Storyboard from Story
+      document.getElementById('generate-storyboard-btn').addEventListener('click', async () => {
+        const story = document.getElementById('story').value.trim();
+        if (!story) {
+          alert('Please enter a story');
+          return;
+        }
+
+        const loading = document.getElementById('storyboard-loading');
+        const error = document.getElementById('storyboard-error');
+        const list = document.getElementById('storyboard-list');
+
+        loading.classList.remove('hidden');
+        error.classList.add('hidden');
+        list.innerHTML = '';
+
+        try {
+          const res = await fetch('/api/storyboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              story,
+              characterStyleGuide: characterProfile.styleGuide,
+              personalityPreset: selectedPersonality,
+              targetDuration: 15
+            })
+          });
+
+          if (!res.ok) throw new Error('Failed to generate storyboard');
+
+          const result = await res.json();
+          scenarios = result.scenes || [];
+
+          renderScenarios(scenarios, list);
+          document.getElementById('next-to-step-4').classList.remove('hidden');
+        } catch (err) {
+          error.textContent = err.message;
+          error.classList.remove('hidden');
+        } finally {
+          loading.classList.add('hidden');
+        }
+      });
+
+      function renderScenarios(scenes, container) {
+        container.innerHTML = '';
+        scenes.forEach((scene, idx) => {
+          const card = document.createElement('div');
+          card.className = 'scenario-card';
+          card.innerHTML = `
+            <h3>${scene.hook || scene.description || `Scene ${idx + 1}`}</h3>
+            <div class="meta">${scene.duration || 8}s · ${scene.textOverlay || 'No text overlay'}</div>
+            ${scene.dialogue ? `<div class="dialogue">"${scene.dialogue}"</div>` : ''}
+            <div class="prompt">${scene.prompt || scene.sceneDescription || ''}</div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      document.getElementById('back-to-step-2').addEventListener('click', () => goToStep(2));
+      document.getElementById('next-to-step-4').addEventListener('click', () => {
+        goToStep(4);
+        renderPromptReview();
+      });
+
+      // Step 4: Prompt Review
+      document.getElementById('back-to-step-3-from-review').addEventListener('click', () => goToStep(3));
+      document.getElementById('approve-and-generate').addEventListener('click', () => {
+        goToStep(5);
+        startVideoGeneration();
+      });
+
+      function renderPromptReview() {
+        const container = document.getElementById('prompt-review-list');
+        container.innerHTML = '';
+
+        scenarios.forEach((scene, idx) => {
+          const card = document.createElement('div');
+          card.className = 'prompt-review-card';
+          
+          const isExpanded = idx === 0; // First one expanded by default
+          
+          card.innerHTML = `
+            <h3>
+              Scene ${idx + 1}: ${scene.hook || scene.description || 'Untitled'}
+              <span class="expand-toggle" data-idx="${idx}">
+                ${isExpanded ? '▼ Collapse' : '▶ Expand'}
+              </span>
+            </h3>
+            
+            <div class="meta-info">
+              <div class="meta-item">
+                <strong>Duration</strong>
+                ${scene.duration || 8} seconds
+              </div>
+              ${scene.dialogue ? `
+                <div class="meta-item">
+                  <strong>Dialogue</strong>
+                  "${scene.dialogue}"
+                </div>
+              ` : ''}
+              ${scene.textOverlay ? `
+                <div class="meta-item">
+                  <strong>Text Overlay</strong>
+                  ${scene.textOverlay}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="prompt-section" id="prompt-section-${idx}" style="display: ${isExpanded ? 'block' : 'none'};">
+              <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">
+                <strong>Sora Prompt</strong> (Edit if needed)
+              </label>
+              <textarea 
+                class="prompt-editor" 
+                data-idx="${idx}"
+                placeholder="Full Sora prompt..."
+              >${scene.prompt || scene.sceneDescription || ''}</textarea>
+              
+              <div style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted);">
+                💡 Tip: Be specific about camera angles, lighting, and character details for best results
+              </div>
+            </div>
+          `;
+          
+          container.appendChild(card);
+        });
+
+        // Add expand/collapse handlers
+        document.querySelectorAll('.expand-toggle').forEach(toggle => {
+          toggle.addEventListener('click', (e) => {
+            const idx = e.target.dataset.idx;
+            const section = document.getElementById(`prompt-section-${idx}`);
+            const isVisible = section.style.display !== 'none';
+            
+            section.style.display = isVisible ? 'none' : 'block';
+            e.target.textContent = isVisible ? '▶ Expand' : '▼ Collapse';
+          });
+        });
+
+        // Update scenarios when prompts are edited
+        document.querySelectorAll('.prompt-editor').forEach(editor => {
+          editor.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            scenarios[idx].prompt = e.target.value;
+          });
+        });
+      }
+
+      // Step 5: Video Generation
+      document.getElementById('back-to-step-4').addEventListener('click', () => goToStep(4));
+
+      async function startVideoGeneration() {
+        const grid = document.getElementById('video-grid');
+        const status = document.getElementById('generation-status');
+        const error = document.getElementById('generation-error');
+
+        if (!characterImageFile) {
+          error.textContent = 'Character image not found. Please go back and upload character image.';
+          error.classList.remove('hidden');
+          return;
+        }
+
+        status.classList.remove('hidden');
+        status.textContent = '🎬 Starting video generation...';
+        error.classList.add('hidden');
+        grid.innerHTML = '';
+
+        // Generate videos for all scenarios
+        for (let i = 0; i < scenarios.length; i++) {
+          const scene = scenarios[i];
+          
+          // Create video card
+          const videoCard = document.createElement('div');
+          videoCard.className = 'video-card';
+          videoCard.id = `video-card-${i}`;
+          videoCard.innerHTML = `
+            <div class="card-body">
+              <div class="card-title">
+                <strong>Scene ${i + 1}:</strong> ${scene.hook || scene.description || 'Untitled'}
+              </div>
+              <div class="status-pill status-pending" id="status-${i}">Queued</div>
+              <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);" id="progress-${i}">
+                Waiting to start...
+              </div>
+              <div class="video-container" id="video-container-${i}" style="margin-top: 12px; min-height: 200px; background: #000; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                <div>⏳ Queued...</div>
+              </div>
+              <div class="card-actions" id="actions-${i}" style="display: none;">
+                <button class="btn btn-secondary btn-sm" onclick="remixScene(${i})">🔄 Remix</button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadScene(${i})">⬇️ Download</button>
+              </div>
+            </div>
+          `;
+          grid.appendChild(videoCard);
+
+          // Generate video
+          try {
+            status.textContent = `⏳ Generating scene ${i + 1} of ${scenarios.length}...`;
+            
+            // Update status
+            const statusPill = document.getElementById(`status-${i}`);
+            const progressText = document.getElementById(`progress-${i}`);
+            const videoContainer = document.getElementById(`video-container-${i}`);
+            
+            statusPill.textContent = 'Generating...';
+            statusPill.className = 'status-pill status-pending';
+            progressText.textContent = 'Sending to Sora API...';
+            videoContainer.innerHTML = '<div>🎬 Generating with Sora 2...</div>';
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('image', characterImageFile);
+            formData.append('prompt', scene.prompt || scene.sceneDescription);
+            formData.append('seconds', scene.duration || 8);
+            formData.append('size', '720x1280');
+
+            // Start generation
+            const generateRes = await fetch('/api/generate', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (!generateRes.ok) {
+              throw new Error('Failed to start video generation');
+            }
+
+            const videoJob = await generateRes.json();
+            scene.videoId = videoJob.id;
+
+            // Poll for completion with error handling
+            progressText.textContent = 'Video generation in progress...';
+            
+            let completed = false;
+            let errorCount = 0;
+            const maxErrors = 5;
+            
+            while (!completed) {
+              try {
+                await new Promise(resolve => setTimeout(resolve, 3000)); // Poll every 3 seconds
+
+                const statusRes = await fetch(`/api/status/${videoJob.id}`);
+                
+                if (!statusRes.ok) {
+                  const errorData = await statusRes.json().catch(() => ({}));
+                  
+                  // Handle retryable OpenAI server errors
+                  if (errorData.retryable) {
+                    errorCount++;
+                    progressText.textContent = `⚠️ OpenAI server issue, retrying... (${errorCount}/${maxErrors})`;
+                    
+                    if (errorCount >= maxErrors) {
+                      throw new Error('OpenAI servers are experiencing issues. Please try again later.');
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    continue;
+                  }
+                  
+                  throw new Error(errorData.error || 'Failed to check video status');
+                }
+
+                // Reset error count on success
+                errorCount = 0;
+                
+                const jobStatus = await statusRes.json();
+                const progress = jobStatus.progress || 0;
+
+                if (jobStatus.status === 'completed') {
+                  completed = true;
+                  statusPill.textContent = 'Completed';
+                  statusPill.className = 'status-pill status-ok';
+                  progressText.textContent = '✅ Video ready!';
+                  
+                  // Show video
+                  videoContainer.innerHTML = `
+                    <video controls style="width: 100%; border-radius: 8px;">
+                      <source src="/api/download/${videoJob.id}" type="video/mp4">
+                    </video>
+                  `;
+
+                  // Show action buttons
+                  document.getElementById(`actions-${i}`).style.display = 'flex';
+
+                } else if (jobStatus.status === 'failed') {
+                  throw new Error('Video generation failed');
+                } else {
+                  // Update progress
+                  progressText.textContent = `${jobStatus.status} - ${Math.round(progress)}%`;
+                }
+              } catch (err) {
+                if (err.message.includes('OpenAI servers')) {
+                  throw err; // Don't retry if we've exceeded max errors
+                }
+                
+                errorCount++;
+                if (errorCount >= maxErrors) {
+                  throw err;
+                }
+                
+                progressText.textContent = `⚠️ Temporary error, retrying... (${errorCount}/${maxErrors})`;
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+            }
+
+          } catch (err) {
+            console.error(`Scene ${i + 1} error:`, err);
+            const statusPill = document.getElementById(`status-${i}`);
+            const progressText = document.getElementById(`progress-${i}`);
+            const videoContainer = document.getElementById(`video-container-${i}`);
+            
+            statusPill.textContent = 'Failed';
+            statusPill.className = 'status-pill status-error';
+            progressText.textContent = `❌ ${err.message}`;
+            videoContainer.innerHTML = `<div style="color: var(--danger);">Generation failed</div>`;
+          }
+        }
+
+        status.textContent = `✅ Completed ${scenarios.length} scene(s)!`;
+      }
+
+      // Remix scene function
+      window.remixScene = async function(sceneIndex) {
+        const scene = scenarios[sceneIndex];
+        if (!scene.videoId) return;
+
+        const newPrompt = prompt('Enter remix prompt (describe specific change):', 'Make it more dramatic');
+        if (!newPrompt) return;
+
+        const statusPill = document.getElementById(`status-${sceneIndex}`);
+        const progressText = document.getElementById(`progress-${sceneIndex}`);
+        const videoContainer = document.getElementById(`video-container-${sceneIndex}`);
+
+        try {
+          statusPill.textContent = 'Remixing...';
+          statusPill.className = 'status-pill status-pending';
+          progressText.textContent = 'Sending remix request...';
+
+          const res = await fetch('/api/remix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              videoId: scene.videoId,
+              prompt: newPrompt
+            })
+          });
+
+          if (!res.ok) throw new Error('Failed to start remix');
+
+          const remixJob = await res.json();
+          
+          // Poll for remix completion
+          let completed = false;
+          while (!completed) {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            const statusRes = await fetch(`/api/status/${remixJob.id}`);
+            const jobStatus = await statusRes.json();
+
+            if (jobStatus.status === 'completed') {
+              completed = true;
+              scene.videoId = remixJob.id; // Update with new video
+              
+              statusPill.textContent = 'Remixed';
+              statusPill.className = 'status-pill status-ok';
+              progressText.textContent = '✅ Remix complete!';
+              
+              videoContainer.innerHTML = `
+                <video controls style="width: 100%; border-radius: 8px;">
+                  <source src="/api/download/${remixJob.id}" type="video/mp4">
+                </video>
+              `;
+            } else if (jobStatus.status === 'failed') {
+              throw new Error('Remix failed');
+            } else {
+              progressText.textContent = `Remixing - ${jobStatus.status}...`;
+            }
+          }
+        } catch (err) {
+          statusPill.textContent = 'Failed';
+          statusPill.className = 'status-pill status-error';
+          progressText.textContent = `❌ ${err.message}`;
+        }
+      };
+
+      // Download scene function
+      window.downloadScene = function(sceneIndex) {
+        const scene = scenarios[sceneIndex];
+        if (!scene.videoId) return;
+        window.open(`/api/download/${scene.videoId}`, '_blank');
+      };
+    </script>
+  </body>
+</html>
+

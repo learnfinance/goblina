@@ -1,0 +1,404 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sora Image/Video Prompt Schema",
+  "description": "Comprehensive structured prompt for AI image/video generation with detailed subject, accessories, photography, and background specifications",
+  "type": "object",
+  "required": ["subject", "photography"],
+  "properties": {
+    "subject": {
+      "type": "object",
+      "description": "Primary subject/character details",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Overall description of the subject and what they're doing"
+        },
+        "character_name": {
+          "type": "string",
+          "description": "Name of the character if applicable (e.g., Ms. Goblina)"
+        },
+        "character_type": {
+          "type": "string",
+          "description": "Type of character (e.g., human, goblin, cartoon, 3D animated)",
+          "enum": ["human", "goblin", "cartoon_character", "3d_animated", "anime", "realistic", "stylized"]
+        },
+        "mirror_rules": {
+          "type": "string",
+          "description": "Special rules for mirror/reflection scenes (e.g., text legibility)"
+        },
+        "age": {
+          "type": "string",
+          "description": "Age range (e.g., young adult, teenager, 20s, 30s)"
+        },
+        "expression": {
+          "type": "string",
+          "description": "Facial expression and mood (e.g., playful, nose scrunched, biting straw)"
+        },
+        "pose": {
+          "type": "string",
+          "description": "Body positioning and gesture"
+        },
+        "action": {
+          "type": "string",
+          "description": "What the subject is actively doing"
+        },
+        "dialogue": {
+          "type": "string",
+          "description": "Spoken words if applicable"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "skin_tone": {
+              "type": "string",
+              "description": "Skin color/tone (e.g., green-skinned, fair, brown)"
+            },
+            "build": {
+              "type": "string",
+              "description": "Body type"
+            }
+          }
+        },
+        "hair": {
+          "type": "object",
+          "properties": {
+            "color": {
+              "type": "string"
+            },
+            "style": {
+              "type": "string",
+              "description": "Hairstyle description (e.g., long straight hair falling over shoulders)"
+            },
+            "texture": {
+              "type": "string",
+              "description": "Hair texture (e.g., wavy, curly, sleek)"
+            }
+          }
+        },
+        "clothing": {
+          "type": "object",
+          "properties": {
+            "top": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Type of top garment (e.g., ribbed knit cami top, hoodie, t-shirt)"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "string",
+                  "description": "Additional details (e.g., cropped fit, thin straps, logo)"
+                },
+                "text_on_clothing": {
+                  "type": "string",
+                  "description": "Any text/graphics on the clothing"
+                }
+              }
+            },
+            "bottom": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Type of bottom garment (e.g., denim jeans, skirt, sweatpants)"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "string"
+                }
+              }
+            },
+            "outerwear": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "string"
+                }
+              }
+            },
+            "footwear": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "face": {
+          "type": "object",
+          "properties": {
+            "preserve_original": {
+              "type": "boolean",
+              "description": "Whether to preserve the original face from reference image"
+            },
+            "makeup": {
+              "type": "string",
+              "description": "Makeup style (e.g., natural sunkissed look, glowing skin)"
+            },
+            "features": {
+              "type": "string",
+              "description": "Notable facial features"
+            }
+          }
+        }
+      }
+    },
+    "accessories": {
+      "type": "object",
+      "description": "All accessories worn or held by the subject",
+      "properties": {
+        "headwear": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of headwear (e.g., baseball cap, headphones)"
+            },
+            "details": {
+              "type": "string",
+              "description": "Specific details (e.g., white NY logo embroidery)"
+            }
+          }
+        },
+        "jewelry": {
+          "type": "object",
+          "properties": {
+            "earrings": {
+              "type": "string"
+            },
+            "necklace": {
+              "type": "string"
+            },
+            "wrist": {
+              "type": "string",
+              "description": "Bracelets, bangles, watches"
+            },
+            "rings": {
+              "type": "string"
+            }
+          }
+        },
+        "eyewear": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "details": {
+              "type": "string"
+            }
+          }
+        },
+        "device": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Type of device (e.g., smartphone, laptop)"
+            },
+            "details": {
+              "type": "string",
+              "description": "Device details (e.g., white case with pink floral pattern)"
+            },
+            "screen_content": {
+              "type": "string",
+              "description": "What's shown on the device screen if visible"
+            }
+          }
+        },
+        "prop": {
+          "type": "object",
+          "description": "Any prop the subject is holding or interacting with",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "details": {
+              "type": "string"
+            }
+          }
+        },
+        "bag": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "details": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "photography": {
+      "type": "object",
+      "description": "Camera and visual treatment settings",
+      "required": ["aspect_ratio"],
+      "properties": {
+        "camera_style": {
+          "type": "string",
+          "description": "Overall camera aesthetic (e.g., smartphone mirror selfie, cinematic, documentary)",
+          "enum": ["smartphone_selfie", "mirror_selfie", "cinematic", "documentary", "handheld", "static", "dynamic", "POV", "professional_studio"]
+        },
+        "angle": {
+          "type": "string",
+          "description": "Camera angle (e.g., eye-level, low angle, high angle, Dutch angle)"
+        },
+        "shot_type": {
+          "type": "string",
+          "description": "Type of shot (e.g., waist-up, close-up, medium, wide, two-shot)",
+          "enum": ["extreme_close_up", "close_up", "medium_close", "medium", "medium_wide", "wide", "extreme_wide", "two_shot", "over_shoulder"]
+        },
+        "shot_composition": {
+          "type": "string",
+          "description": "Framing details (e.g., subject positioned on the right side)"
+        },
+        "camera_movement": {
+          "type": "string",
+          "description": "How camera moves (e.g., push-in, pull-out, tracking, static, pan)",
+          "enum": ["static", "push_in", "pull_out", "tracking", "pan_left", "pan_right", "tilt_up", "tilt_down", "dolly", "handheld_shake", "orbital"]
+        },
+        "aspect_ratio": {
+          "type": "string",
+          "description": "Output aspect ratio",
+          "enum": ["9:16", "16:9", "1:1", "4:5"]
+        },
+        "texture": {
+          "type": "string",
+          "description": "Visual texture/quality (e.g., sharp focus, film grain, soft)"
+        },
+        "color_grading": {
+          "type": "string",
+          "description": "Color treatment (e.g., warm tones, cool tones, desaturated, vibrant)"
+        },
+        "visual_style": {
+          "type": "string",
+          "description": "Overall art style (e.g., 3D cartoon, Pixar-like, realistic, anime)"
+        }
+      }
+    },
+    "background": {
+      "type": "object",
+      "description": "Scene background and environment",
+      "properties": {
+        "setting": {
+          "type": "string",
+          "description": "Location type (e.g., bright casual bedroom, dim office, coffee shop)"
+        },
+        "setting_details": {
+          "type": "string",
+          "description": "More specific setting description"
+        },
+        "wall_color": {
+          "type": "string"
+        },
+        "elements": {
+          "type": "array",
+          "description": "List of visible background elements",
+          "items": {
+            "type": "string"
+          }
+        },
+        "atmosphere": {
+          "type": "string",
+          "description": "Mood/vibe of the scene (e.g., casual lifestyle, cozy, corporate)"
+        },
+        "lighting": {
+          "type": "string",
+          "description": "Lighting setup (e.g., soft natural daylight, fluorescent office, dramatic)"
+        },
+        "time_of_day": {
+          "type": "string",
+          "description": "Time context if relevant"
+        },
+        "weather": {
+          "type": "string",
+          "description": "Weather conditions if relevant"
+        }
+      }
+    },
+    "video_specific": {
+      "type": "object",
+      "description": "Video-only settings (for Sora)",
+      "properties": {
+        "duration_seconds": {
+          "type": "integer",
+          "description": "Target video length",
+          "minimum": 3,
+          "maximum": 20
+        },
+        "pacing": {
+          "type": "string",
+          "description": "Video rhythm (e.g., fast, moderate, slow, varied)",
+          "enum": ["fast", "moderate", "slow", "varied"]
+        },
+        "motion_intensity": {
+          "type": "string",
+          "description": "How much movement (e.g., subtle, moderate, dynamic)",
+          "enum": ["minimal", "subtle", "moderate", "dynamic", "intense"]
+        },
+        "text_overlay": {
+          "type": "string",
+          "description": "Text to appear on screen"
+        },
+        "text_position": {
+          "type": "string",
+          "description": "Where text appears (e.g., bottom center, top)"
+        }
+      }
+    },
+    "negative_prompt": {
+      "type": "array",
+      "description": "Things to explicitly avoid",
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        "no extra characters",
+        "no distorted faces",
+        "no blurry text",
+        "no extra limbs"
+      ]
+    },
+    "style_reference": {
+      "type": "object",
+      "description": "Reference to character style guide if available",
+      "properties": {
+        "character_id": {
+          "type": "string"
+        },
+        "color_palette": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "artistic_style": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,68 @@
+{
+  "subject": {
+    "description": "A young woman taking a mirror selfie, playfully biting the straw of an iced green drink",
+    "mirror_rules": "ignore mirror physics for text on clothing, display text forward and legible to viewer, no extra characters",
+    "age": "young adult",
+    "expression": "playful, nose scrunched, biting straw",
+    "hair": {
+      "color": "brown",
+      "style": "long straight hair falling over shoulders"
+    },
+    "clothing": {
+      "top": {
+        "type": "ribbed knit cami top",
+        "color": "white",
+        "details": "cropped fit, thin straps, small dainty bow at neckline"
+      },
+      "bottom": {
+        "type": "denim jeans",
+        "color": "light wash blue",
+        "details": "relaxed fit, visible button fly"
+      }
+    },
+    "face": {
+      "preserve_original": true,
+      "makeup": "natural sunkissed look, glowing skin, nude glossy lips"
+    }
+  },
+  "accessories": {
+    "headwear": {
+      "type": "olive green baseball cap",
+      "details": "white NY logo embroidery, silver over-ear headphones worn over the cap"
+    },
+    "jewelry": {
+      "earrings": "large gold hoop earrings",
+      "necklace": "thin gold chain with cross pendant",
+      "wrist": "gold bangles and bracelets mixed",
+      "rings": "multiple gold rings"
+    },
+    "device": {
+      "type": "smartphone",
+      "details": "white case with pink floral pattern"
+    },
+    "prop": {
+      "type": "iced beverage",
+      "details": "plastic cup with iced matcha latte and green straw"
+    }
+  },
+  "photography": {
+    "camera_style": "smartphone mirror selfie aesthetic",
+    "angle": "eye-level mirror reflection",
+    "shot_type": "waist-up composition, subject positioned on the right side of the frame",
+    "aspect_ratio": "9:16 vertical",
+    "texture": "sharp focus, natural indoor lighting, social media realism, clean details"
+  },
+  "background": {
+    "setting": "bright casual bedroom",
+    "wall_color": "plain white",
+    "elements": [
+      "bed with white textured duvet",
+      "black woven shoulder bag lying on bed",
+      "leopard print throw pillow",
+      "distressed white vintage nightstand",
+      "modern bedside lamp with white shade"
+    ],
+    "atmosphere": "casual lifestyle, cozy, spontaneous",
+    "lighting": "soft natural daylight"
+  }
+}

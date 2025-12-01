@@ -1,0 +1,29 @@
+# Render Blueprint Configuration
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: goblina-creator
+    env: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in dashboard
+      - key: DATABASE_URL
+        fromDatabase:
+          name: database1
+          property: connectionString
+
+databases:
+  - name: database1
+    databaseName: database1_xo1v
+    user: database1_xo1v_user
+    plan: free
+    region: frankfurt
+
