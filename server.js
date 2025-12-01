@@ -91,7 +91,7 @@ app.post('/api/characters/analyze', upload.single('image'), async (req, res) => 
           content: [
             {
               type: 'text',
-              text: `Analyze this character image and extract a detailed style guide. Return a JSON object with the following structure:
+              text: `Analyze this character image and extract a detailed style guide. Respond with valid JSON in the following structure:
 {
   "character": {
     "appearance": "Detailed physical description (skin color, hair, clothing, accessories, body type)",
@@ -108,7 +108,7 @@ app.post('/api/characters/analyze', upload.single('image'), async (req, res) => 
   }
 }
 
-Be specific and detailed. Extract actual hex color codes from dominant colors in the image.`
+Be specific and detailed. Extract actual hex color codes from dominant colors in the image. Return only valid JSON.`
             },
             {
               type: 'image_url',
@@ -335,7 +335,9 @@ Remember: The "prompt" field should be a COMPLETE, DETAILED paragraph ready to p
 - Visual style (3D cartoon, Pixar-like)
 - Any constraints (e.g., "second character does not speak")
 
-This is for a Gen Z audience so make it relatable and punchy!`
+This is for a Gen Z audience so make it relatable and punchy!
+
+IMPORTANT: Respond with valid JSON only.`
         }
       ],
       max_tokens: 3500,
@@ -578,9 +580,11 @@ IMPORTANT RULES:
         },
         {
           role: 'user',
-          content: `Create a detailed structured JSON prompt for this meme/content idea: "${topic}"
+          content: `Create a detailed structured prompt for this meme/content idea: "${topic}"
           
-Make sure the prompt captures the Gen Z relatable vibe and includes specific visual details that will make this content engaging for Instagram Reels.`
+Make sure the prompt captures the Gen Z relatable vibe and includes specific visual details that will make this content engaging for Instagram Reels.
+
+IMPORTANT: Respond with valid JSON only.`
         }
       ],
       max_tokens: 3000,
@@ -708,7 +712,9 @@ Return JSON:
         },
         {
           role: 'user',
-          content: story
+          content: `${story}
+
+IMPORTANT: Respond with valid JSON only.`
         }
       ],
       max_tokens: 2500,
