@@ -790,8 +790,8 @@
                     <input type="text" id="style-artistic" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
                   </div>
                 </div>
-              </div>
-            </div>
+        </div>
+      </div>
 
             <!-- Color Palette Card -->
             <div style="padding: 16px; border-radius: 12px; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2);">
@@ -1950,9 +1950,9 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
               <span>Scene ${idx + 1}: ${scene.hook || scene.description || 'Untitled'}</span>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <button class="copy-btn" data-copy-idx="${idx}" onclick="copyPromptToClipboard(${idx})">📋 Copy</button>
-                <span class="expand-toggle" data-idx="${idx}">
-                  ${isExpanded ? '▼ Collapse' : '▶ Expand'}
-                </span>
+              <span class="expand-toggle" data-idx="${idx}">
+                ${isExpanded ? '▼ Collapse' : '▶ Expand'}
+              </span>
               </div>
             </h3>
             
@@ -1985,10 +1985,10 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
                   "${scene.dialogue}"
                 </div>
               ` : ''}
-              <div class="meta-item">
+                <div class="meta-item">
                 <strong>Voice</strong>
                 ${document.getElementById('include-voice')?.checked ? '🎙️ Included' : '🔇 Disabled'}
-              </div>
+                </div>
             </div>
 
             <div class="prompt-section" id="prompt-section-${idx}" style="display: ${isExpanded ? 'block' : 'none'};">
@@ -2091,7 +2091,7 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
         const grid = document.getElementById('video-grid');
         const status = document.getElementById('generation-status');
         const error = document.getElementById('generation-error');
-        
+
         // Check if A/B mode is enabled
         const isABMode = document.getElementById('ab-generation')?.checked || false;
 
@@ -2134,13 +2134,13 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
           videoCard.innerHTML = `
             <div class="card-body">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <div class="card-title">
+              <div class="card-title">
                   <strong>Scene ${sceneNum}${variantLabel}:</strong> ${scene.hook || scene.description || 'Untitled'}
-                </div>
+              </div>
                 <button class="favorite-btn" id="fav-${i}" onclick="toggleFavorite(${i})" title="Add to favorites">🤍</button>
               </div>
               <div style="display: flex; align-items: center; gap: 12px;">
-                <div class="status-pill status-pending" id="status-${i}">Queued</div>
+              <div class="status-pill status-pending" id="status-${i}">Queued</div>
                 <!-- Rating Stars -->
                 <div class="rating-stars" id="rating-${i}" style="display: none;">
                   <span class="rating-star" onclick="rateVideo(${i}, 1)">⭐</span>
@@ -2160,7 +2160,9 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
                 <button class="btn btn-secondary btn-sm" onclick="remixScene(${i})">🔄 Remix</button>
                 <button class="btn btn-secondary btn-sm" onclick="downloadScene(${i})">⬇️ Download</button>
                 <button class="btn btn-secondary btn-sm" onclick="copyVideoPrompt(${i})">📋 Copy Prompt</button>
+                <button class="btn btn-secondary btn-sm" id="save-permanent-${i}" onclick="savePermanently(${i})" title="Save to cloud storage forever">☁️ Save</button>
               </div>
+              <div id="storage-status-${i}" style="display: none; margin-top: 8px; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem;"></div>
             </div>
           `;
           grid.appendChild(videoCard);
@@ -2193,7 +2195,7 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
             
             // Either use uploaded file or image URL from saved character
             if (characterImageFile) {
-              formData.append('image', characterImageFile);
+            formData.append('image', characterImageFile);
             } else if (characterProfile?.imageUrl) {
               formData.append('imageUrl', characterProfile.imageUrl);
             }
@@ -2476,6 +2478,85 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
           console.error('Failed to copy:', err);
         }
       };
+
+      // Save video permanently to Cloudinary
+      window.savePermanently = async function(idx) {
+        const video = generatedVideos[idx];
+        if (!video?.soraJobId) {
+          alert('Video not ready yet');
+          return;
+        }
+
+        const btn = document.getElementById(`save-permanent-${idx}`);
+        const statusDiv = document.getElementById(`storage-status-${idx}`);
+        
+        btn.disabled = true;
+        btn.textContent = '☁️ Saving...';
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = 'rgba(251, 191, 36, 0.2)';
+        statusDiv.style.color = '#fbbf24';
+        statusDiv.textContent = '⏳ Uploading to cloud storage...';
+
+        try {
+          const res = await fetch('/api/videos/save-permanent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              soraJobId: video.soraJobId,
+              videoId: video.id
+            })
+          });
+
+          const result = await res.json();
+
+          if (!res.ok) {
+            throw new Error(result.message || result.error || 'Failed to save');
+          }
+
+          // Success!
+          btn.textContent = '✓ Saved';
+          btn.style.borderColor = 'var(--accent-green)';
+          btn.style.color = 'var(--accent-green)';
+          statusDiv.style.background = 'rgba(52, 211, 153, 0.2)';
+          statusDiv.style.color = '#34d399';
+          statusDiv.innerHTML = `✓ Permanently saved! <a href="${result.permanentUrl}" target="_blank" style="color: inherit;">View →</a>`;
+          
+          // Update video source to permanent URL
+          const videoContainer = document.getElementById(`video-container-${idx}`);
+          if (videoContainer && result.permanentUrl) {
+            const videoEl = videoContainer.querySelector('video');
+            if (videoEl) {
+              videoEl.src = result.permanentUrl;
+            }
+          }
+
+          video.permanentUrl = result.permanentUrl;
+
+        } catch (err) {
+          console.error('Save permanent error:', err);
+          btn.disabled = false;
+          btn.textContent = '☁️ Save';
+          statusDiv.style.background = 'rgba(248, 113, 113, 0.2)';
+          statusDiv.style.color = '#f87171';
+          statusDiv.textContent = `❌ ${err.message}`;
+        }
+      };
+
+      // Check storage configuration on load
+      async function checkStorageStatus() {
+        try {
+          const res = await fetch('/api/storage/status');
+          const status = await res.json();
+          
+          if (!status.cloudinary.configured) {
+            console.warn('☁️ Cloudinary not configured - videos will not be permanently stored');
+          }
+        } catch (err) {
+          console.warn('Could not check storage status:', err);
+        }
+      }
+      
+      checkStorageStatus();
     </script>
   </body>
 </html>

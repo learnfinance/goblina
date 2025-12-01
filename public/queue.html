@@ -419,7 +419,21 @@
               <div class="card-actions">
                 <button class="action-btn" onclick="downloadVideo('${video.sora_job_id}')">⬇️ Download</button>
                 <button class="action-btn" onclick="copyPrompt('${video.id}')">📋 Copy Prompt</button>
+                ${video.video_url ? `
+                  <span style="color: var(--accent-green); font-size: 0.75rem;">☁️ Saved</span>
+                ` : `
+                  <button class="action-btn" onclick="savePermanently('${video.id}', '${video.sora_job_id}')" id="save-btn-${video.id}">☁️ Save</button>
+                `}
               </div>
+              ${video.video_url ? `
+                <div style="margin-top: 8px; font-size: 0.7rem; color: var(--accent-green);">
+                  ✓ Permanently stored
+                </div>
+              ` : `
+                <div style="margin-top: 8px; font-size: 0.7rem; color: var(--accent-yellow);">
+                  ⚠️ Temporary - save to keep forever
+                </div>
+              `}
             ` : ''}
           </div>
         </div>
@@ -500,6 +514,64 @@
       });
     });
 
+    // Save video permanently to Cloudinary
+    async function savePermanently(videoId, soraJobId) {
+      const btn = document.getElementById(`save-btn-${videoId}`);
+      if (!btn) return;
+      
+      btn.disabled = true;
+      btn.textContent = '☁️ Saving...';
+
+      try {
+        const res = await fetch('/api/videos/save-permanent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ soraJobId, videoId })
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          throw new Error(result.message || result.error || 'Failed to save');
+        }
+
+        // Refresh to show updated status
+        await loadVideos();
+        alert('✓ Video saved permanently to cloud storage!');
+
+      } catch (err) {
+        console.error('Save permanent error:', err);
+        btn.disabled = false;
+        btn.textContent = '☁️ Save';
+        alert('Failed to save: ' + err.message);
+      }
+    }
+
+    // Check and display storage status
+    async function checkStorageStatus() {
+      try {
+        const res = await fetch('/api/storage/status');
+        const status = await res.json();
+        
+        if (!status.cloudinary.configured && status.recommendations.length > 0) {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background: rgba(251, 191, 36, 0.2); border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 12px; padding: 16px; margin-bottom: 24px;';
+          banner.innerHTML = `
+            <div style="font-weight: 600; color: #fbbf24; margin-bottom: 8px;">⚠️ Cloud Storage Not Configured</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              ${status.recommendations.join('<br>')}
+            </div>
+            <div style="margin-top: 12px; font-size: 0.8rem;">
+              <strong>To enable:</strong> Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your environment.
+            </div>
+          `;
+          document.querySelector('.container').insertBefore(banner, document.querySelector('.stats-grid'));
+        }
+      } catch (err) {
+        console.warn('Could not check storage status:', err);
+      }
+    }
+
     // Auto-refresh pending videos
     setInterval(() => {
       const hasPending = allVideos.some(v => v.status === 'pending');
@@ -510,6 +582,7 @@
 
     // Initial load
     loadVideos();
+    checkStorageStatus();
   </script>
 </body>
 </html>

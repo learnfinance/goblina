@@ -61,6 +61,68 @@ async function uploadToCloudinary(filePath, folder = 'goblina-characters') {
   }
 }
 
+/**
+ * Upload video to Cloudinary from URL
+ * @param {string} videoUrl - URL of the video to upload
+ * @param {string} folder - Cloudinary folder name
+ * @returns {Promise<{url: string, publicId: string}|null>} - Video URL and ID or null if failed
+ */
+async function uploadVideoToCloudinary(videoUrl, folder = 'goblina-videos') {
+  if (!hasCloudinary) {
+    console.log('⚠️ Cloudinary not configured - video will not be permanently stored');
+    return null;
+  }
+  
+  try {
+    console.log('☁️ Uploading video to Cloudinary...');
+    const result = await cloudinary.uploader.upload(videoUrl, {
+      folder: folder,
+      resource_type: 'video',
+      eager: [
+        { format: 'mp4', video_codec: 'h264' }
+      ],
+      eager_async: true
+    });
+    console.log('☁️ Video uploaded successfully:', result.secure_url);
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+      duration: result.duration,
+      format: result.format,
+      bytes: result.bytes
+    };
+  } catch (err) {
+    console.error('Cloudinary video upload error:', err);
+    return null;
+  }
+}
+
+/**
+ * Upload video to Cloudinary from local file
+ * @param {string} filePath - Path to the video file
+ * @param {string} folder - Cloudinary folder name
+ * @returns {Promise<{url: string, publicId: string}|null>}
+ */
+async function uploadVideoFileToCloudinary(filePath, folder = 'goblina-videos') {
+  if (!hasCloudinary) return null;
+  
+  try {
+    console.log('☁️ Uploading video file to Cloudinary...');
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder: folder,
+      resource_type: 'video'
+    });
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+      duration: result.duration
+    };
+  } catch (err) {
+    console.error('Cloudinary video file upload error:', err);
+    return null;
+  }
+}
+
 // Basic checks
 const hasOpenAI = !!process.env.OPENAI_API_KEY;
 if (!hasOpenAI) {
@@ -1478,6 +1540,78 @@ if (hasDatabase) {
       console.error('Error updating rating:', err);
       res.status(500).json({ error: 'Failed to update rating', details: err.message });
     }
+  });
+
+  // Permanently save a video to Cloudinary
+  app.post('/api/videos/save-permanent', async (req, res) => {
+    try {
+      const { soraJobId, videoId } = req.body;
+      if (!soraJobId) {
+        return res.status(400).json({ error: 'soraJobId is required' });
+      }
+
+      if (!hasCloudinary) {
+        return res.status(400).json({ 
+          error: 'Cloudinary not configured', 
+          message: 'Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to enable permanent storage' 
+        });
+      }
+
+      // Get video URL from Sora
+      const soraResponse = await fetch(`https://api.openai.com/v1/videos/${soraJobId}`, {
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }
+      });
+
+      if (!soraResponse.ok) {
+        throw new Error('Failed to fetch video from Sora');
+      }
+
+      const soraData = await soraResponse.json();
+      
+      if (!soraData.url) {
+        return res.status(400).json({ error: 'Video not ready or already expired' });
+      }
+
+      // Upload to Cloudinary
+      const cloudinaryResult = await uploadVideoToCloudinary(soraData.url);
+      
+      if (!cloudinaryResult) {
+        throw new Error('Failed to upload to Cloudinary');
+      }
+
+      // Update database with permanent URL
+      if (videoId) {
+        await db.updateVideoStatus(videoId, 'completed', cloudinaryResult.url);
+      }
+
+      res.json({
+        success: true,
+        permanentUrl: cloudinaryResult.url,
+        publicId: cloudinaryResult.publicId,
+        duration: cloudinaryResult.duration
+      });
+    } catch (err) {
+      console.error('Error saving video permanently:', err);
+      res.status(500).json({ error: 'Failed to save video permanently', details: err.message });
+    }
+  });
+
+  // Get storage status
+  app.get('/api/storage/status', async (req, res) => {
+    res.json({
+      cloudinary: {
+        configured: hasCloudinary,
+        features: hasCloudinary ? ['images', 'videos'] : []
+      },
+      database: {
+        configured: hasDatabase,
+        features: hasDatabase ? ['characters', 'projects', 'videos', 'presets', 'prompts'] : []
+      },
+      recommendations: !hasCloudinary ? [
+        'Set up Cloudinary for permanent video storage',
+        'Videos from Sora expire after ~24 hours without Cloudinary'
+      ] : []
+    });
   });
 
   // Get favorited videos only
