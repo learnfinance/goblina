@@ -1449,6 +1449,84 @@ if (hasDatabase) {
       res.status(500).json({ error: 'Failed to save video', details: err.message });
     }
   });
+
+  // Toggle video favorite
+  app.post('/api/videos/favorite', async (req, res) => {
+    try {
+      const { id, isFavorite } = req.body;
+      if (!id) {
+        return res.status(400).json({ error: 'id is required' });
+      }
+      const video = await db.updateVideoFavorite(id, isFavorite);
+      res.json(video || { success: true });
+    } catch (err) {
+      console.error('Error updating favorite:', err);
+      res.status(500).json({ error: 'Failed to update favorite', details: err.message });
+    }
+  });
+
+  // Rate a video
+  app.post('/api/videos/rate', async (req, res) => {
+    try {
+      const { id, rating } = req.body;
+      if (!id || rating === undefined) {
+        return res.status(400).json({ error: 'id and rating are required' });
+      }
+      const video = await db.updateVideoRating(id, rating);
+      res.json(video || { success: true });
+    } catch (err) {
+      console.error('Error updating rating:', err);
+      res.status(500).json({ error: 'Failed to update rating', details: err.message });
+    }
+  });
+
+  // Get favorited videos only
+  app.get('/api/videos/favorites', async (req, res) => {
+    try {
+      const videos = await db.listVideos(null, true);
+      res.json(videos);
+    } catch (err) {
+      console.error('Error listing favorites:', err);
+      res.status(500).json({ error: 'Failed to list favorites', details: err.message });
+    }
+  });
+
+  // Custom Personality Presets endpoints
+  app.get('/api/personalities/custom', async (req, res) => {
+    try {
+      const presets = await db.listPersonalityPresets();
+      res.json(presets);
+    } catch (err) {
+      console.error('Error listing custom presets:', err);
+      res.status(500).json({ error: 'Failed to list custom presets', details: err.message });
+    }
+  });
+
+  app.post('/api/personalities/custom/save', async (req, res) => {
+    try {
+      const { id, name, description, tone, humorStyle, captionStyle, emojiUsage } = req.body;
+      if (!id || !name) {
+        return res.status(400).json({ error: 'id and name are required' });
+      }
+      const preset = await db.savePersonalityPreset(id, name, description, {
+        tone, humorStyle, captionStyle, emojiUsage
+      });
+      res.json(preset);
+    } catch (err) {
+      console.error('Error saving custom preset:', err);
+      res.status(500).json({ error: 'Failed to save custom preset', details: err.message });
+    }
+  });
+
+  app.delete('/api/personalities/custom/:id', async (req, res) => {
+    try {
+      await db.deletePersonalityPreset(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Error deleting custom preset:', err);
+      res.status(500).json({ error: 'Failed to delete custom preset', details: err.message });
+    }
+  });
 }
 
 // ==========================================

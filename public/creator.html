@@ -486,6 +486,121 @@
       .video-container {
         position: relative;
       }
+
+      /* Snippet buttons */
+      .snippet-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.8);
+        color: var(--text-main);
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+
+      .snippet-btn:hover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        transform: translateY(-1px);
+      }
+
+      .snippet-btn.copied {
+        border-color: var(--accent-green);
+        background: rgba(52, 211, 153, 0.2);
+      }
+
+      /* Copy button */
+      .copy-btn {
+        padding: 4px 10px;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.8);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .copy-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .copy-btn.copied {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+      }
+
+      /* Scenario action buttons */
+      .scenario-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-subtle);
+      }
+
+      .scenario-action-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-subtle);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .scenario-action-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .scenario-action-btn.delete:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      /* Rating stars */
+      .rating-stars {
+        display: flex;
+        gap: 4px;
+      }
+
+      .rating-star {
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: transform 0.1s;
+        opacity: 0.3;
+      }
+
+      .rating-star:hover {
+        transform: scale(1.2);
+      }
+
+      .rating-star.active {
+        opacity: 1;
+      }
+
+      /* Favorite button */
+      .favorite-btn {
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: none;
+        border: none;
+        padding: 4px;
+      }
+
+      .favorite-btn:hover {
+        transform: scale(1.1);
+      }
+
+      .favorite-btn.favorited {
+        color: #f59e0b;
+      }
     </style>
   </head>
   <body>
@@ -532,6 +647,13 @@
           border-radius: 8px;
           transition: all 0.2s;
         ">📚 Templates</a>
+        <a href="/queue.html" style="
+          color: var(--text-muted);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s;
+        ">📊 Queue</a>
         <a href="/creator.html" style="
           color: var(--accent);
           text-decoration: none;
@@ -646,8 +768,67 @@
         </form>
 
         <div id="style-guide-preview" class="hidden" style="margin-top: 20px;">
-          <h3 style="margin-bottom: 12px;">📋 Style Guide</h3>
-          <pre id="style-guide-json" style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 0.75rem;"></pre>
+          <h3 style="margin-bottom: 12px;">📋 Style Guide (Visual Editor)</h3>
+          
+          <!-- Visual Style Cards -->
+          <div id="style-guide-visual" style="display: grid; gap: 16px;">
+            <!-- Character Card -->
+            <div style="padding: 16px; border-radius: 12px; background: rgba(91, 141, 255, 0.1); border: 1px solid rgba(91, 141, 255, 0.2);">
+              <h4 style="margin: 0 0 12px; font-size: 0.9rem; color: var(--accent);">👤 Character Appearance</h4>
+              <div style="display: grid; gap: 12px;">
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-muted);">Physical Description</label>
+                  <textarea id="style-appearance" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main); min-height: 60px; resize: vertical;"></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted);">Visual Style</label>
+                    <input type="text" id="style-visual" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+                  </div>
+                  <div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted);">Artistic Style</label>
+                    <input type="text" id="style-artistic" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Color Palette Card -->
+            <div style="padding: 16px; border-radius: 12px; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2);">
+              <h4 style="margin: 0 0 12px; font-size: 0.9rem; color: var(--accent-green);">🎨 Color Palette</h4>
+              <div id="color-swatches" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+              <div style="margin-top: 12px;">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">Add Color (hex)</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="new-color" placeholder="#8BC34A" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+                  <button onclick="addColorSwatch()" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--accent-green); background: transparent; color: var(--accent-green); cursor: pointer;">+ Add</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lighting & Details Card -->
+            <div style="padding: 16px; border-radius: 12px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2);">
+              <h4 style="margin: 0 0 12px; font-size: 0.9rem; color: #fbbf24;">💡 Lighting & Details</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-muted);">Typical Lighting</label>
+                  <input type="text" id="style-lighting" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-muted);">Distinctive Details</label>
+                  <input type="text" id="style-details" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Toggle Raw JSON -->
+          <div style="margin-top: 12px;">
+            <button onclick="toggleRawJson()" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-muted); cursor: pointer;">
+              📄 Show Raw JSON
+            </button>
+          </div>
+          <pre id="style-guide-json" class="hidden" style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 0.75rem; margin-top: 12px;"></pre>
         </div>
         </div><!-- close upload-new-character-section -->
       </div>
@@ -660,8 +841,19 @@
         </p>
 
         <!-- Personality Presets -->
-        <label style="margin-bottom: 8px; display: block;">Content Personality</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <label style="margin: 0;">Content Personality</label>
+          <button onclick="openCreatePresetModal()" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer;">
+            + Create Custom
+          </button>
+        </div>
         <div class="preset-grid" id="personality-presets"></div>
+        
+        <!-- Custom Presets Section -->
+        <div id="custom-presets-section" class="hidden" style="margin-top: 16px;">
+          <label style="margin-bottom: 8px; display: block; color: var(--accent-green);">✨ Your Custom Presets</label>
+          <div class="preset-grid" id="custom-presets"></div>
+        </div>
 
         <!-- Video Settings -->
         <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
@@ -700,6 +892,39 @@
                 <option value="3">3 variations</option>
                 <option value="5">5 variations</option>
               </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice Settings for Audio Consistency -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+          <h3 style="margin: 0 0 16px; font-size: 1rem;">🎙️ Voice Settings (Audio Consistency)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+            Sora generates audio! Configure voice settings for consistent sound across all videos.
+          </p>
+          
+          <div style="display: grid; gap: 16px;">
+            <div>
+              <label for="voice-description">Voice Description</label>
+              <textarea id="voice-description" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main); min-height: 80px; resize: vertical;" placeholder="Describe the character's voice...">Young adult female voice, playful and slightly sarcastic tone, American accent with Gen-Z inflections, speaks with expressive energy and occasional vocal fry, natural conversational cadence</textarea>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <label for="voice-style">Speaking Style</label>
+                <input type="text" id="voice-style" value="casual, relatable, meme-culture aware" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main);" />
+              </div>
+              <div>
+                <label for="voice-emotions">Emotional Expression</label>
+                <input type="text" id="voice-emotions" value="expressive eye rolls, dramatic sighs, enthusiastic reactions" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main);" />
+              </div>
+            </div>
+            
+            <div>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="include-voice" checked style="width: 18px; height: 18px;" />
+                <span>Include voice instructions in all prompts (recommended for consistency)</span>
+              </label>
             </div>
           </div>
         </div>
@@ -774,6 +999,39 @@
           Review the AI-generated prompts before sending to Sora. You can edit any prompt to fine-tune the output.
         </p>
 
+        <!-- Prompt Snippets Panel -->
+        <div style="margin-bottom: 20px; padding: 16px; background: rgba(91, 141, 255, 0.1); border-radius: 12px; border: 1px solid rgba(91, 141, 255, 0.2);">
+          <h4 style="margin: 0 0 12px; font-size: 0.9rem; color: var(--accent);">📝 Quick Insert Snippets</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="prompt-snippets">
+            <button class="snippet-btn" data-snippet="Camera slowly dollies in on the subject, creating intimacy.">📷 Dolly In</button>
+            <button class="snippet-btn" data-snippet="Camera pans left to right, revealing the scene.">📷 Pan Left→Right</button>
+            <button class="snippet-btn" data-snippet="Slow motion capture of the action, emphasizing dramatic effect.">🎬 Slow Motion</button>
+            <button class="snippet-btn" data-snippet="Quick cut between reactions, fast-paced editing style.">✂️ Quick Cuts</button>
+            <button class="snippet-btn" data-snippet="Soft, diffused natural lighting from a window.">💡 Soft Window Light</button>
+            <button class="snippet-btn" data-snippet="Harsh fluorescent office lighting with slight green tint.">💡 Office Lighting</button>
+            <button class="snippet-btn" data-snippet="Dramatic rim lighting creating silhouette effect.">💡 Dramatic Rim</button>
+            <button class="snippet-btn" data-snippet="Character looks directly at camera, breaking the fourth wall.">👁️ Eye Contact</button>
+            <button class="snippet-btn" data-snippet="Exaggerated eye roll with head tilt, expressing disbelief.">🙄 Eye Roll</button>
+            <button class="snippet-btn" data-snippet="Deep sigh with shoulder drop, showing exhaustion.">😮‍💨 Sigh</button>
+            <button class="snippet-btn" data-snippet="Subtle smirk forming at corner of mouth.">😏 Smirk</button>
+            <button class="snippet-btn" data-snippet="Modern minimalist apartment with plants and natural wood.">🏠 Modern Apartment</button>
+            <button class="snippet-btn" data-snippet="Busy open-plan office with cubicles and monitors.">🏢 Office Cubicle</button>
+            <button class="snippet-btn" data-snippet="Cozy coffee shop with warm ambient lighting.">☕ Coffee Shop</button>
+          </div>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+            💡 Click a snippet to copy, then paste into any prompt editor below
+          </p>
+        </div>
+
+        <!-- A/B Generation Toggle -->
+        <div style="margin-bottom: 16px; padding: 12px; background: rgba(52, 211, 153, 0.1); border-radius: 10px; border: 1px solid rgba(52, 211, 153, 0.3);">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+            <input type="checkbox" id="ab-generation" style="width: 18px; height: 18px;" />
+            <span style="font-weight: 500;">🔀 A/B Generation Mode</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Generate 2 versions of each scene for comparison</span>
+          </label>
+        </div>
+
         <div id="prompt-review-list" class="scenario-list"></div>
 
         <div class="btn-group">
@@ -802,6 +1060,72 @@
       </div>
     </div>
 
+    <!-- Custom Preset Modal -->
+    <div id="preset-modal" class="hidden" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    ">
+      <div style="
+        background: var(--panel);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+      ">
+        <h2 style="margin: 0 0 16px;">✨ Create Custom Personality</h2>
+        <form id="preset-form">
+          <div style="margin-bottom: 16px;">
+            <label>Preset Name</label>
+            <input type="text" id="preset-name" placeholder="My Custom Style" required style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label>Description</label>
+            <input type="text" id="preset-description" placeholder="Short description" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label>Tone</label>
+            <input type="text" id="preset-tone" placeholder="playful, sarcastic, dramatic" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label>Humor Style</label>
+            <input type="text" id="preset-humor" placeholder="self-deprecating, observational" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label>Caption Style</label>
+            <input type="text" id="preset-caption" placeholder="short punchy hooks, relatable statements" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);" />
+          </div>
+          <div style="margin-bottom: 20px;">
+            <label>Emoji Usage</label>
+            <select id="preset-emoji" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10,12,22,0.9); color: var(--text-main);">
+              <option value="heavy">Heavy - lots of emojis 😂🔥💀</option>
+              <option value="moderate" selected>Moderate - occasional emojis</option>
+              <option value="minimal">Minimal - rarely use emojis</option>
+              <option value="none">None - no emojis</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button type="button" onclick="closePresetModal()" style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border-subtle); background: transparent; color: var(--text-muted); cursor: pointer;">
+              Cancel
+            </button>
+            <button type="submit" style="flex: 1; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), #bf5af2); color: white; cursor: pointer; font-weight: 600;">
+              Save Preset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script>
       // State
       let characterProfile = null;
@@ -817,6 +1141,38 @@
         aspectRatio: '720x1280',
         sceneCount: 1
       };
+
+      // Build voice prompt suffix for consistency (reads from UI fields)
+      function getVoicePromptSuffix() {
+        const includeVoice = document.getElementById('include-voice')?.checked ?? true;
+        if (!includeVoice) return '';
+
+        const voiceDesc = document.getElementById('voice-description')?.value || 
+          "Young adult female voice, playful and slightly sarcastic tone, American accent with Gen-Z inflections";
+        const voiceStyle = document.getElementById('voice-style')?.value || 
+          "casual, relatable, meme-culture aware";
+        const voiceEmotions = document.getElementById('voice-emotions')?.value || 
+          "expressive eye rolls, dramatic sighs, enthusiastic reactions";
+
+        return `
+
+AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
+- Voice: ${voiceDesc}
+- Speaking style: ${voiceStyle}
+- Emotional expression: ${voiceEmotions}
+- Background audio: Subtle ambient sounds matching the setting (office hum, cafe chatter, etc.)
+- No background music unless explicitly specified in the scene.`;
+      }
+
+      // Get current voice settings as object (for saving)
+      function getVoiceSettings() {
+        return {
+          description: document.getElementById('voice-description')?.value || '',
+          style: document.getElementById('voice-style')?.value || '',
+          emotions: document.getElementById('voice-emotions')?.value || '',
+          enabled: document.getElementById('include-voice')?.checked ?? true
+        };
+      }
 
       // Elements
       const wizardSteps = document.querySelectorAll('.wizard-step');
@@ -874,13 +1230,16 @@
       // Handle saved character selection
       document.getElementById('saved-character-select').addEventListener('change', handleSavedCharacterSelect);
       
-      // Continue button for saved character
-      document.getElementById('continue-with-saved-char').addEventListener('click', () => {
-        if (characterProfile) {
-          goToStep(2);
-          loadPersonalityPresets();
-        } else {
-          alert('Please select a character first');
+      // Continue button for saved character - use event delegation to ensure it works
+      document.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'continue-with-saved-char') {
+          console.log('Continue button clicked, characterProfile:', characterProfile);
+          if (characterProfile) {
+            goToStep(2);
+            loadPersonalityPresets();
+          } else {
+            alert('Please select a character first');
+          }
         }
       });
 
@@ -890,12 +1249,23 @@
         const preview = document.getElementById('saved-character-preview');
         const uploadSection = document.getElementById('upload-new-character-section');
 
+        console.log('Character selected:', charId, 'Available characters:', savedCharacters);
+
         if (charId) {
-          const char = savedCharacters.find(c => c.id === charId);
+          // Use loose comparison to handle string/number ID mismatches
+          const char = savedCharacters.find(c => String(c.id) === String(charId));
+          console.log('Found character:', char);
+          
           if (char) {
-            const styleGuide = typeof char.style_guide === 'string' 
-              ? JSON.parse(char.style_guide) 
-              : char.style_guide;
+            let styleGuide;
+            try {
+              styleGuide = typeof char.style_guide === 'string' 
+                ? JSON.parse(char.style_guide) 
+                : char.style_guide;
+            } catch (e) {
+              console.warn('Could not parse style guide:', e);
+              styleGuide = {};
+            }
 
             // Set character profile
             characterProfile = {
@@ -904,6 +1274,8 @@
               styleGuide: styleGuide,
               imageUrl: char.image_url
             };
+            
+            console.log('Character profile set:', characterProfile);
 
             // Show preview
             document.getElementById('selected-char-name').textContent = char.name;
@@ -926,6 +1298,8 @@
             
             // Hide upload section
             uploadSection.style.display = 'none';
+          } else {
+            console.error('Character not found in savedCharacters array');
           }
         } else {
           // Show upload section, hide preview
@@ -1016,6 +1390,9 @@
           characterProfile = await res.json();
           styleGuideJson.textContent = JSON.stringify(characterProfile.styleGuide, null, 2);
           styleGuidePreview.classList.remove('hidden');
+          
+          // Populate visual style guide editor
+          populateStyleGuideEditor(characterProfile.styleGuide);
 
           // AUTO-SAVE character to database
           try {
@@ -1050,9 +1427,97 @@
         }
       });
 
+      // Visual Style Guide Editor Functions
+      let styleColors = [];
+
+      function populateStyleGuideEditor(styleGuide) {
+        if (!styleGuide) return;
+        
+        const char = styleGuide.character || {};
+        
+        // Populate fields
+        document.getElementById('style-appearance').value = char.appearance || '';
+        document.getElementById('style-visual').value = char.visualStyle || '';
+        document.getElementById('style-artistic').value = char.artisticStyle || '';
+        document.getElementById('style-lighting').value = char.lighting || '';
+        document.getElementById('style-details').value = char.details || '';
+        
+        // Populate color swatches
+        styleColors = char.colorPalette || [];
+        renderColorSwatches();
+      }
+
+      function renderColorSwatches() {
+        const container = document.getElementById('color-swatches');
+        container.innerHTML = styleColors.map((color, idx) => `
+          <div style="display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+            <div style="width: 24px; height: 24px; border-radius: 6px; background: ${color}; border: 2px solid rgba(255,255,255,0.2);"></div>
+            <span style="font-size: 0.75rem; font-family: monospace;">${color}</span>
+            <button onclick="removeColorSwatch(${idx})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 2px;">×</button>
+          </div>
+        `).join('');
+      }
+
+      window.addColorSwatch = function() {
+        const input = document.getElementById('new-color');
+        let color = input.value.trim();
+        if (!color) return;
+        
+        // Add # if missing
+        if (!color.startsWith('#')) color = '#' + color;
+        
+        // Validate hex color
+        if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
+          alert('Please enter a valid hex color (e.g., #8BC34A)');
+          return;
+        }
+        
+        styleColors.push(color);
+        renderColorSwatches();
+        updateStyleGuideFromEditor();
+        input.value = '';
+      };
+
+      window.removeColorSwatch = function(idx) {
+        styleColors.splice(idx, 1);
+        renderColorSwatches();
+        updateStyleGuideFromEditor();
+      };
+
+      function updateStyleGuideFromEditor() {
+        if (!characterProfile) return;
+        
+        characterProfile.styleGuide = characterProfile.styleGuide || {};
+        characterProfile.styleGuide.character = characterProfile.styleGuide.character || {};
+        
+        const char = characterProfile.styleGuide.character;
+        char.appearance = document.getElementById('style-appearance').value;
+        char.visualStyle = document.getElementById('style-visual').value;
+        char.artisticStyle = document.getElementById('style-artistic').value;
+        char.lighting = document.getElementById('style-lighting').value;
+        char.details = document.getElementById('style-details').value;
+        char.colorPalette = styleColors;
+        
+        // Update JSON view
+        document.getElementById('style-guide-json').textContent = JSON.stringify(characterProfile.styleGuide, null, 2);
+      }
+
+      // Add change listeners to style inputs
+      ['style-appearance', 'style-visual', 'style-artistic', 'style-lighting', 'style-details'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', updateStyleGuideFromEditor);
+      });
+
+      window.toggleRawJson = function() {
+        const json = document.getElementById('style-guide-json');
+        json.classList.toggle('hidden');
+      };
+
       // Step 2: Personality Presets
+      let customPresets = [];
+
       async function loadPersonalityPresets() {
         try {
+          // Load default presets
           const res = await fetch('/api/personalities/presets');
           const presets = await res.json();
 
@@ -1074,10 +1539,119 @@
             });
             grid.appendChild(card);
           });
+
+          // Load custom presets
+          await loadCustomPresets();
         } catch (err) {
           console.error('Failed to load presets:', err);
         }
       }
+
+      async function loadCustomPresets() {
+        try {
+          const res = await fetch('/api/personalities/custom');
+          customPresets = await res.json();
+          
+          const section = document.getElementById('custom-presets-section');
+          const grid = document.getElementById('custom-presets');
+          
+          if (customPresets.length === 0) {
+            section.classList.add('hidden');
+            return;
+          }
+          
+          section.classList.remove('hidden');
+          grid.innerHTML = '';
+          
+          customPresets.forEach(preset => {
+            const card = document.createElement('div');
+            card.className = 'preset-card';
+            if (preset.id === selectedPersonality) card.classList.add('selected');
+            card.innerHTML = `
+              <h3>${preset.name} <span style="font-size: 0.7rem; color: var(--accent-green);">★ Custom</span></h3>
+              <p>${preset.description || 'Custom personality preset'}</p>
+              <button onclick="event.stopPropagation(); deleteCustomPreset('${preset.id}')" style="
+                margin-top: 8px;
+                padding: 4px 8px;
+                font-size: 0.7rem;
+                border-radius: 4px;
+                border: 1px solid var(--danger);
+                background: transparent;
+                color: var(--danger);
+                cursor: pointer;
+              ">Delete</button>
+            `;
+            card.addEventListener('click', () => {
+              selectedPersonality = preset.id;
+              document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+              card.classList.add('selected');
+            });
+            grid.appendChild(card);
+          });
+        } catch (err) {
+          console.error('Failed to load custom presets:', err);
+        }
+      }
+
+      window.openCreatePresetModal = function() {
+        document.getElementById('preset-modal').classList.remove('hidden');
+        document.getElementById('preset-modal').style.display = 'flex';
+      };
+
+      window.closePresetModal = function() {
+        document.getElementById('preset-modal').classList.add('hidden');
+        document.getElementById('preset-modal').style.display = 'none';
+        document.getElementById('preset-form').reset();
+      };
+
+      document.getElementById('preset-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const preset = {
+          id: 'custom_' + Date.now(),
+          name: document.getElementById('preset-name').value,
+          description: document.getElementById('preset-description').value,
+          tone: document.getElementById('preset-tone').value,
+          humorStyle: document.getElementById('preset-humor').value,
+          captionStyle: document.getElementById('preset-caption').value,
+          emojiUsage: document.getElementById('preset-emoji').value
+        };
+
+        try {
+          await fetch('/api/personalities/custom/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(preset)
+          });
+          
+          closePresetModal();
+          await loadCustomPresets();
+          
+          // Select the new preset
+          selectedPersonality = preset.id;
+          document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
+          
+        } catch (err) {
+          console.error('Failed to save preset:', err);
+          alert('Failed to save preset');
+        }
+      });
+
+      window.deleteCustomPreset = async function(id) {
+        if (!confirm('Delete this custom preset?')) return;
+        
+        try {
+          await fetch(`/api/personalities/custom/${id}`, { method: 'DELETE' });
+          await loadCustomPresets();
+          
+          // Reset selection if deleted preset was selected
+          if (selectedPersonality === id) {
+            selectedPersonality = 'genz-meme';
+          }
+        } catch (err) {
+          console.error('Failed to delete preset:', err);
+        }
+      };
 
       document.getElementById('back-to-step-1').addEventListener('click', () => goToStep(1));
       document.getElementById('next-to-step-3').addEventListener('click', () => goToStep(3));
@@ -1234,6 +1808,132 @@
         startVideoGeneration();
       });
 
+      // Snippet copy functionality
+      document.querySelectorAll('.snippet-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const snippet = btn.dataset.snippet;
+          try {
+            await navigator.clipboard.writeText(snippet);
+            btn.classList.add('copied');
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              btn.textContent = originalText;
+            }, 1500);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        });
+      });
+
+      // Copy prompt to clipboard function
+      async function copyPromptToClipboard(idx) {
+        const prompt = scenarios[idx]?.prompt || scenarios[idx]?.sceneDescription || '';
+        try {
+          await navigator.clipboard.writeText(prompt + getVoicePromptSuffix());
+          const btn = document.querySelector(`[data-copy-idx="${idx}"]`);
+          if (btn) {
+            btn.classList.add('copied');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              btn.textContent = '📋 Copy';
+            }, 1500);
+          }
+        } catch (err) {
+          console.error('Failed to copy:', err);
+          alert('Failed to copy to clipboard');
+        }
+      }
+
+      // Delete scenario function
+      function deleteScenario(idx) {
+        if (confirm('Delete this scenario?')) {
+          scenarios.splice(idx, 1);
+          renderPromptReview();
+          if (scenarios.length === 0) {
+            document.getElementById('next-to-step-4').classList.add('hidden');
+          }
+        }
+      }
+
+      // Move scenario up/down
+      function moveScenario(idx, direction) {
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= scenarios.length) return;
+        
+        const temp = scenarios[idx];
+        scenarios[idx] = scenarios[newIdx];
+        scenarios[newIdx] = temp;
+        renderPromptReview();
+      }
+
+      // Regenerate single scenario
+      async function regenerateScenario(idx) {
+        const topic = document.getElementById('topic').value.trim();
+        if (!topic) {
+          alert('Original topic not found');
+          return;
+        }
+
+        const card = document.querySelector(`#prompt-review-card-${idx}`);
+        if (card) {
+          card.style.opacity = '0.5';
+          card.innerHTML = '<div class="loading">🔄 Regenerating scenario...</div>';
+        }
+
+        try {
+          const res = await fetch('/api/scenarios/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              topic: topic + ' (alternative take)',
+              characterStyleGuide: characterProfile?.styleGuide,
+              personalityPreset: selectedPersonality,
+              sceneCount: 1
+            })
+          });
+
+          if (!res.ok) throw new Error('Failed to regenerate');
+
+          const result = await res.json();
+          const newScenario = result.scenarios?.[0] || result;
+          scenarios[idx] = newScenario;
+          renderPromptReview();
+        } catch (err) {
+          console.error('Regenerate error:', err);
+          alert('Failed to regenerate scenario');
+          renderPromptReview();
+        }
+      }
+
+      // Save prompt to library
+      async function savePromptToLibrary(idx) {
+        const scene = scenarios[idx];
+        const name = prompt('Name for this prompt template:', scene.hook || 'My Prompt');
+        if (!name) return;
+
+        try {
+          await fetch('/api/prompts/library/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: 'prompt_' + Date.now(),
+              name: name,
+              category: selectedPersonality,
+              structuredPrompt: scene,
+              textPrompt: scene.prompt || scene.sceneDescription,
+              tags: [selectedPersonality, 'saved']
+            })
+          });
+          alert('✓ Prompt saved to library!');
+        } catch (err) {
+          console.error('Save prompt error:', err);
+          alert('Failed to save prompt');
+        }
+      }
+
       function renderPromptReview() {
         const container = document.getElementById('prompt-review-list');
         container.innerHTML = '';
@@ -1241,15 +1941,19 @@
         scenarios.forEach((scene, idx) => {
           const card = document.createElement('div');
           card.className = 'prompt-review-card';
+          card.id = `prompt-review-card-${idx}`;
           
           const isExpanded = idx === 0; // First one expanded by default
           
           card.innerHTML = `
-            <h3>
-              Scene ${idx + 1}: ${scene.hook || scene.description || 'Untitled'}
-              <span class="expand-toggle" data-idx="${idx}">
-                ${isExpanded ? '▼ Collapse' : '▶ Expand'}
-              </span>
+            <h3 style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <span>Scene ${idx + 1}: ${scene.hook || scene.description || 'Untitled'}</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="copy-btn" data-copy-idx="${idx}" onclick="copyPromptToClipboard(${idx})">📋 Copy</button>
+                <span class="expand-toggle" data-idx="${idx}">
+                  ${isExpanded ? '▼ Collapse' : '▶ Expand'}
+                </span>
+              </div>
             </h3>
             
             <!-- TEXT OVERLAY EDITOR -->
@@ -1281,17 +1985,16 @@
                   "${scene.dialogue}"
                 </div>
               ` : ''}
-              ${scene.textOverlay ? `
-                <div class="meta-item">
-                  <strong>Text Overlay</strong>
-                  ${scene.textOverlay}
-                </div>
-              ` : ''}
+              <div class="meta-item">
+                <strong>Voice</strong>
+                ${document.getElementById('include-voice')?.checked ? '🎙️ Included' : '🔇 Disabled'}
+              </div>
             </div>
 
             <div class="prompt-section" id="prompt-section-${idx}" style="display: ${isExpanded ? 'block' : 'none'};">
-              <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">
+              <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">
                 <strong>Sora Prompt</strong> (Edit if needed)
+                <span style="font-size: 0.7rem;">${(scene.prompt || scene.sceneDescription || '').length} chars</span>
               </label>
               <textarea 
                 class="prompt-editor" 
@@ -1299,9 +2002,41 @@
                 placeholder="Full Sora prompt..."
               >${scene.prompt || scene.sceneDescription || ''}</textarea>
               
+              <!-- Prompt Breakdown -->
+              <div style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; color: var(--accent);">📊 Prompt Breakdown</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; font-size: 0.75rem;">
+                  <div style="padding: 6px; background: rgba(91, 141, 255, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-muted);">📷 Camera</div>
+                    <div>${scene.cameraMovement || scene.photography?.camera || 'Standard'}</div>
+                  </div>
+                  <div style="padding: 6px; background: rgba(91, 141, 255, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-muted);">💡 Lighting</div>
+                    <div>${scene.lighting || scene.photography?.lighting || 'Natural'}</div>
+                  </div>
+                  <div style="padding: 6px; background: rgba(91, 141, 255, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-muted);">🎭 Action</div>
+                    <div>${scene.action || scene.characterAction || 'Expressive'}</div>
+                  </div>
+                  <div style="padding: 6px; background: rgba(91, 141, 255, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-muted);">🌍 Setting</div>
+                    <div>${scene.setting || scene.background?.setting || 'Interior'}</div>
+                  </div>
+                </div>
+              </div>
+              
               <div style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted);">
                 💡 Tip: Be specific about camera angles, lighting, and character details for best results
               </div>
+            </div>
+
+            <!-- Scenario Actions -->
+            <div class="scenario-actions">
+              <button class="scenario-action-btn" onclick="moveScenario(${idx}, -1)" ${idx === 0 ? 'disabled style="opacity:0.3"' : ''}>⬆️ Move Up</button>
+              <button class="scenario-action-btn" onclick="moveScenario(${idx}, 1)" ${idx === scenarios.length - 1 ? 'disabled style="opacity:0.3"' : ''}>⬇️ Move Down</button>
+              <button class="scenario-action-btn" onclick="regenerateScenario(${idx})">🔄 Regenerate</button>
+              <button class="scenario-action-btn" onclick="savePromptToLibrary(${idx})">💾 Save to Library</button>
+              <button class="scenario-action-btn delete" onclick="deleteScenario(${idx})">🗑️ Delete</button>
             </div>
           `;
           
@@ -1322,9 +2057,12 @@
 
         // Update scenarios when prompts are edited
         document.querySelectorAll('.prompt-editor').forEach(editor => {
-          editor.addEventListener('change', (e) => {
+          editor.addEventListener('input', (e) => {
             const idx = parseInt(e.target.dataset.idx);
             scenarios[idx].prompt = e.target.value;
+            // Update char count
+            const label = e.target.previousElementSibling?.querySelector('span');
+            if (label) label.textContent = e.target.value.length + ' chars';
           });
         });
 
@@ -1353,6 +2091,9 @@
         const grid = document.getElementById('video-grid');
         const status = document.getElementById('generation-status');
         const error = document.getElementById('generation-error');
+        
+        // Check if A/B mode is enabled
+        const isABMode = document.getElementById('ab-generation')?.checked || false;
 
         // Check if we have either a file upload OR a saved character with image URL
         const hasImageFile = !!characterImageFile;
@@ -1363,26 +2104,52 @@
           error.classList.remove('hidden');
           return;
         }
+        
+        // If A/B mode, duplicate each scenario
+        let scenariosToGenerate = [...scenarios];
+        if (isABMode) {
+          scenariosToGenerate = scenarios.flatMap((scene, idx) => [
+            { ...scene, variant: 'A', originalIdx: idx },
+            { ...scene, variant: 'B', originalIdx: idx, prompt: scene.prompt + '\n\n[ALTERNATIVE TAKE: Different camera angle and timing variation]' }
+          ]);
+        }
 
         status.classList.remove('hidden');
-        status.textContent = '🎬 Starting video generation...';
+        status.textContent = isABMode 
+          ? `🎬 Starting A/B video generation (${scenariosToGenerate.length} videos)...`
+          : '🎬 Starting video generation...';
         error.classList.add('hidden');
         grid.innerHTML = '';
 
         // Generate videos for all scenarios
-        for (let i = 0; i < scenarios.length; i++) {
-          const scene = scenarios[i];
+        for (let i = 0; i < scenariosToGenerate.length; i++) {
+          const scene = scenariosToGenerate[i];
+          const variantLabel = scene.variant ? ` (${scene.variant})` : '';
           
           // Create video card
           const videoCard = document.createElement('div');
           videoCard.className = 'video-card';
           videoCard.id = `video-card-${i}`;
+          const sceneNum = scene.originalIdx !== undefined ? scene.originalIdx + 1 : i + 1;
           videoCard.innerHTML = `
             <div class="card-body">
-              <div class="card-title">
-                <strong>Scene ${i + 1}:</strong> ${scene.hook || scene.description || 'Untitled'}
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div class="card-title">
+                  <strong>Scene ${sceneNum}${variantLabel}:</strong> ${scene.hook || scene.description || 'Untitled'}
+                </div>
+                <button class="favorite-btn" id="fav-${i}" onclick="toggleFavorite(${i})" title="Add to favorites">🤍</button>
               </div>
-              <div class="status-pill status-pending" id="status-${i}">Queued</div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="status-pill status-pending" id="status-${i}">Queued</div>
+                <!-- Rating Stars -->
+                <div class="rating-stars" id="rating-${i}" style="display: none;">
+                  <span class="rating-star" onclick="rateVideo(${i}, 1)">⭐</span>
+                  <span class="rating-star" onclick="rateVideo(${i}, 2)">⭐</span>
+                  <span class="rating-star" onclick="rateVideo(${i}, 3)">⭐</span>
+                  <span class="rating-star" onclick="rateVideo(${i}, 4)">⭐</span>
+                  <span class="rating-star" onclick="rateVideo(${i}, 5)">⭐</span>
+                </div>
+              </div>
               <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);" id="progress-${i}">
                 Waiting to start...
               </div>
@@ -1392,6 +2159,7 @@
               <div class="card-actions" id="actions-${i}" style="display: none;">
                 <button class="btn btn-secondary btn-sm" onclick="remixScene(${i})">🔄 Remix</button>
                 <button class="btn btn-secondary btn-sm" onclick="downloadScene(${i})">⬇️ Download</button>
+                <button class="btn btn-secondary btn-sm" onclick="copyVideoPrompt(${i})">📋 Copy Prompt</button>
               </div>
             </div>
           `;
@@ -1413,7 +2181,13 @@
 
             // Create form data with video settings
             const formData = new FormData();
-            formData.append('prompt', scene.prompt || scene.sceneDescription);
+            
+            // Build final prompt with voice consistency
+            const basePrompt = scene.prompt || scene.sceneDescription;
+            const voiceSuffix = getVoicePromptSuffix();
+            const finalPrompt = basePrompt + voiceSuffix;
+            
+            formData.append('prompt', finalPrompt);
             formData.append('seconds', videoSettings.duration);
             formData.append('size', videoSettings.aspectRatio);
             
@@ -1488,8 +2262,18 @@
                     </video>
                   `;
 
-                  // Show action buttons
+                  // Show action buttons and rating stars
                   document.getElementById(`actions-${i}`).style.display = 'flex';
+                  document.getElementById(`rating-${i}`).style.display = 'flex';
+                  
+                  // Store video data for favorites/ratings
+                  generatedVideos[i] = {
+                    id: 'vid_' + Date.now() + '_' + i,
+                    soraJobId: videoJob.id,
+                    prompt: scene.prompt || scene.sceneDescription,
+                    isFavorite: false,
+                    rating: 0
+                  };
 
                   // SAVE VIDEO TO DATABASE
                   try {
@@ -1614,9 +2398,83 @@
 
       // Download scene function
       window.downloadScene = function(sceneIndex) {
-        const scene = scenarios[sceneIndex];
-        if (!scene.videoId) return;
+        const scene = scenariosToGenerate?.[sceneIndex] || scenarios[sceneIndex];
+        if (!scene?.videoId) return;
         window.open(`/api/download/${scene.videoId}`, '_blank');
+      };
+
+      // Store generated videos data for favorites/ratings
+      let generatedVideos = [];
+      let scenariosToGenerate = [];
+
+      // Toggle favorite
+      window.toggleFavorite = async function(idx) {
+        const btn = document.getElementById(`fav-${idx}`);
+        const video = generatedVideos[idx];
+        
+        if (btn.classList.contains('favorited')) {
+          btn.classList.remove('favorited');
+          btn.textContent = '🤍';
+          if (video) video.isFavorite = false;
+        } else {
+          btn.classList.add('favorited');
+          btn.textContent = '❤️';
+          if (video) video.isFavorite = true;
+        }
+
+        // Save to database
+        if (video?.id) {
+          try {
+            await fetch('/api/videos/favorite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: video.id, isFavorite: video.isFavorite })
+            });
+          } catch (err) {
+            console.warn('Could not save favorite:', err);
+          }
+        }
+      };
+
+      // Rate video
+      window.rateVideo = async function(idx, rating) {
+        const ratingContainer = document.getElementById(`rating-${idx}`);
+        const stars = ratingContainer.querySelectorAll('.rating-star');
+        const video = generatedVideos[idx];
+        
+        stars.forEach((star, starIdx) => {
+          star.classList.toggle('active', starIdx < rating);
+        });
+        
+        if (video) video.rating = rating;
+
+        // Save to database
+        if (video?.id) {
+          try {
+            await fetch('/api/videos/rate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: video.id, rating: rating })
+            });
+          } catch (err) {
+            console.warn('Could not save rating:', err);
+          }
+        }
+      };
+
+      // Copy video prompt
+      window.copyVideoPrompt = async function(idx) {
+        const scene = scenariosToGenerate[idx] || scenarios[idx];
+        if (!scene) return;
+        
+        const fullPrompt = (scene.prompt || scene.sceneDescription || '') + getVoicePromptSuffix();
+        
+        try {
+          await navigator.clipboard.writeText(fullPrompt);
+          alert('✓ Prompt copied to clipboard!');
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
       };
     </script>
   </body>

@@ -56,8 +56,23 @@ export async function initDatabase() {
         status VARCHAR(50) DEFAULT 'pending',
         video_url TEXT,
         duration_seconds INTEGER,
+        is_favorite BOOLEAN DEFAULT FALSE,
+        rating INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW(),
         completed_at TIMESTAMP
+      );
+      
+      -- Personality presets table: stores custom user presets
+      CREATE TABLE IF NOT EXISTS personality_presets (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        tone TEXT,
+        humor_style TEXT,
+        caption_style TEXT,
+        emoji_usage TEXT,
+        is_default BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
       );
 
       -- Prompts library: stores successful prompts for reuse
@@ -220,19 +235,84 @@ export async function getVideo(id) {
   return result.rows[0] || null;
 }
 
-export async function listVideos(projectId = null) {
+export async function listVideos(projectId = null, favoritesOnly = false) {
   let query = 'SELECT * FROM videos';
   const params = [];
+  const conditions = [];
   
   if (projectId) {
-    query += ' WHERE project_id = $1';
+    conditions.push(`project_id = $${params.length + 1}`);
     params.push(projectId);
+  }
+  
+  if (favoritesOnly) {
+    conditions.push('is_favorite = TRUE');
+  }
+  
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
   }
   
   query += ' ORDER BY created_at DESC';
   
   const result = await pool.query(query, params);
   return result.rows;
+}
+
+export async function updateVideoFavorite(id, isFavorite) {
+  const result = await pool.query(
+    `UPDATE videos SET is_favorite = $1 WHERE id = $2 OR sora_job_id = $2 RETURNING *`,
+    [isFavorite, id]
+  );
+  return result.rows[0];
+}
+
+export async function updateVideoRating(id, rating) {
+  const result = await pool.query(
+    `UPDATE videos SET rating = $1 WHERE id = $2 OR sora_job_id = $2 RETURNING *`,
+    [rating, id]
+  );
+  return result.rows[0];
+}
+
+// ==========================================
+// PERSONALITY PRESET OPERATIONS
+// ==========================================
+
+export async function savePersonalityPreset(id, name, description, config) {
+  const result = await pool.query(
+    `INSERT INTO personality_presets (id, name, description, tone, humor_style, caption_style, emoji_usage)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET
+       name = EXCLUDED.name,
+       description = EXCLUDED.description,
+       tone = EXCLUDED.tone,
+       humor_style = EXCLUDED.humor_style,
+       caption_style = EXCLUDED.caption_style,
+       emoji_usage = EXCLUDED.emoji_usage
+     RETURNING *`,
+    [id, name, description, config.tone, config.humorStyle, config.captionStyle, config.emojiUsage]
+  );
+  return result.rows[0];
+}
+
+export async function listPersonalityPresets() {
+  const result = await pool.query(
+    'SELECT * FROM personality_presets ORDER BY is_default DESC, name ASC'
+  );
+  return result.rows;
+}
+
+export async function getPersonalityPreset(id) {
+  const result = await pool.query(
+    'SELECT * FROM personality_presets WHERE id = $1',
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
+export async function deletePersonalityPreset(id) {
+  await pool.query('DELETE FROM personality_presets WHERE id = $1 AND is_default = FALSE', [id]);
 }
 
 // ==========================================

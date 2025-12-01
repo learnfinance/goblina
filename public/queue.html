@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Generation Queue - Sora Creator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05060a;
+      --panel: #111320;
+      --accent: #5b8dff;
+      --accent-soft: rgba(91, 141, 255, 0.2);
+      --accent-green: #34d399;
+      --accent-yellow: #fbbf24;
+      --border-subtle: #272b3f;
+      --text-main: #f3f4ff;
+      --text-muted: #9ca3c7;
+      --danger: #f97373;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top, #15182b 0, #05060a 55%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding-top: 70px;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(17, 19, 32, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(91, 141, 255, 0.2);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 1000;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    nav a:hover { color: var(--text-main); background: rgba(91,141,255,0.1); }
+    nav a.active { color: var(--accent); background: rgba(91,141,255,0.1); }
+    nav a.logo { color: var(--text-main); font-weight: 600; font-size: 1.1rem; }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.8rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, rgba(17, 19, 32, 0.8), rgba(5, 6, 10, 0.8));
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #bf5af2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    .stat-card.pending .stat-value { background: linear-gradient(135deg, var(--accent-yellow), #f59e0b); -webkit-background-clip: text; }
+    .stat-card.completed .stat-value { background: linear-gradient(135deg, var(--accent-green), #10b981); -webkit-background-clip: text; }
+    .stat-card.favorites .stat-value { background: linear-gradient(135deg, #ef4444, #f97316); -webkit-background-clip: text; }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover { border-color: var(--accent); color: var(--text-main); }
+    .filter-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+    /* Video Grid */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .video-card {
+      background: linear-gradient(145deg, rgba(17, 19, 32, 0.8), rgba(5, 6, 10, 0.8));
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .video-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(91, 141, 255, 0.15);
+    }
+
+    .video-card video {
+      width: 100%;
+      aspect-ratio: 9/16;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .video-placeholder {
+      width: 100%;
+      aspect-ratio: 9/16;
+      background: linear-gradient(145deg, #1a1d2e, #0a0c14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .video-placeholder .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-subtle);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .card-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .status-pending { background: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); }
+    .status-completed { background: rgba(52, 211, 153, 0.2); color: var(--accent-green); }
+    .status-failed { background: rgba(248, 113, 113, 0.2); color: var(--danger); }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Rating */
+    .rating {
+      display: flex;
+      gap: 2px;
+      margin-top: 8px;
+    }
+
+    .rating span {
+      font-size: 1rem;
+      opacity: 0.3;
+    }
+
+    .rating span.active { opacity: 1; }
+
+    /* Favorite */
+    .favorite-icon {
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .favorite-icon.active { color: #ef4444; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/home.html" class="logo">🎬 Sora Creator</a>
+    <a href="/characters.html">👤 My Characters</a>
+    <a href="/history.html">📜 History</a>
+    <a href="/templates.html">📚 Templates</a>
+    <a href="/queue.html" class="active">📊 Queue</a>
+    <a href="/creator.html">🧙‍♀️ Creator Wizard</a>
+  </nav>
+
+  <div class="container">
+    <h1>📊 Generation Queue</h1>
+    <p class="subtitle">Track all your video generations across sessions</p>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="total-count">0</div>
+        <div class="stat-label">Total Videos</div>
+      </div>
+      <div class="stat-card pending">
+        <div class="stat-value" id="pending-count">0</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card completed">
+        <div class="stat-value" id="completed-count">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card favorites">
+        <div class="stat-value" id="favorites-count">0</div>
+        <div class="stat-label">Favorites</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pending">⏳ In Progress</button>
+      <button class="filter-btn" data-filter="completed">✅ Completed</button>
+      <button class="filter-btn" data-filter="favorites">❤️ Favorites</button>
+      <button class="filter-btn" data-filter="top-rated">⭐ Top Rated</button>
+    </div>
+
+    <!-- Video Grid -->
+    <div id="video-grid" class="video-grid">
+      <div class="loading">Loading videos...</div>
+    </div>
+  </div>
+
+  <script>
+    let allVideos = [];
+    let currentFilter = 'all';
+
+    async function loadVideos() {
+      try {
+        const res = await fetch('/api/videos');
+        allVideos = await res.json();
+        updateStats();
+        renderVideos();
+      } catch (err) {
+        console.error('Failed to load videos:', err);
+        document.getElementById('video-grid').innerHTML = `
+          <div class="empty-state">
+            <div class="icon">⚠️</div>
+            <div>Failed to load videos</div>
+          </div>
+        `;
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('total-count').textContent = allVideos.length;
+      document.getElementById('pending-count').textContent = allVideos.filter(v => v.status === 'pending').length;
+      document.getElementById('completed-count').textContent = allVideos.filter(v => v.status === 'completed').length;
+      document.getElementById('favorites-count').textContent = allVideos.filter(v => v.is_favorite).length;
+    }
+
+    function renderVideos() {
+      const grid = document.getElementById('video-grid');
+      
+      let filtered = [...allVideos];
+      
+      switch (currentFilter) {
+        case 'pending':
+          filtered = filtered.filter(v => v.status === 'pending');
+          break;
+        case 'completed':
+          filtered = filtered.filter(v => v.status === 'completed');
+          break;
+        case 'favorites':
+          filtered = filtered.filter(v => v.is_favorite);
+          break;
+        case 'top-rated':
+          filtered = filtered.filter(v => v.rating >= 4).sort((a, b) => b.rating - a.rating);
+          break;
+      }
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <div class="icon">📭</div>
+            <div>No videos found</div>
+            <div style="margin-top: 8px;">
+              <a href="/creator.html" style="color: var(--accent);">Create your first video →</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(video => `
+        <div class="video-card" data-id="${video.id}">
+          ${video.status === 'completed' && video.sora_job_id ? `
+            <video controls poster="">
+              <source src="/api/download/${video.sora_job_id}" type="video/mp4">
+            </video>
+          ` : `
+            <div class="video-placeholder">
+              <div class="spinner"></div>
+              <div style="color: var(--text-muted); font-size: 0.85rem;">Generating...</div>
+            </div>
+          `}
+          <div class="card-body">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${truncate(video.prompt || 'Untitled', 50)}</div>
+                <div class="card-meta">${formatDate(video.created_at)}</div>
+              </div>
+              <span class="favorite-icon ${video.is_favorite ? 'active' : ''}" onclick="toggleFavorite('${video.id}')">
+                ${video.is_favorite ? '❤️' : '🤍'}
+              </span>
+            </div>
+            <span class="status-badge status-${video.status}">${video.status}</span>
+            <div class="rating">
+              ${[1,2,3,4,5].map(n => `
+                <span class="${video.rating >= n ? 'active' : ''}" onclick="rateVideo('${video.id}', ${n})">⭐</span>
+              `).join('')}
+            </div>
+            ${video.status === 'completed' ? `
+              <div class="card-actions">
+                <button class="action-btn" onclick="downloadVideo('${video.sora_job_id}')">⬇️ Download</button>
+                <button class="action-btn" onclick="copyPrompt('${video.id}')">📋 Copy Prompt</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function truncate(str, len) {
+      if (!str) return '';
+      return str.length > len ? str.slice(0, len) + '...' : str;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function toggleFavorite(id) {
+      const video = allVideos.find(v => v.id === id);
+      if (!video) return;
+      
+      video.is_favorite = !video.is_favorite;
+      
+      try {
+        await fetch('/api/videos/favorite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, isFavorite: video.is_favorite })
+        });
+        updateStats();
+        renderVideos();
+      } catch (err) {
+        console.error('Failed to update favorite:', err);
+      }
+    }
+
+    async function rateVideo(id, rating) {
+      const video = allVideos.find(v => v.id === id);
+      if (!video) return;
+      
+      video.rating = rating;
+      
+      try {
+        await fetch('/api/videos/rate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, rating })
+        });
+        renderVideos();
+      } catch (err) {
+        console.error('Failed to update rating:', err);
+      }
+    }
+
+    function downloadVideo(soraJobId) {
+      window.open(`/api/download/${soraJobId}`, '_blank');
+    }
+
+    async function copyPrompt(id) {
+      const video = allVideos.find(v => v.id === id);
+      if (!video?.prompt) return;
+      
+      try {
+        await navigator.clipboard.writeText(video.prompt);
+        alert('✓ Prompt copied!');
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderVideos();
+      });
+    });
+
+    // Auto-refresh pending videos
+    setInterval(() => {
+      const hasPending = allVideos.some(v => v.status === 'pending');
+      if (hasPending) {
+        loadVideos();
+      }
+    }, 10000);
+
+    // Initial load
+    loadVideos();
+  </script>
+</body>
+</html>
+
