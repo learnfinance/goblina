@@ -43,8 +43,128 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static frontend
+// ==========================================
+// PASSWORD PROTECTION
+// ==========================================
+const APP_PASSWORD = process.env.APP_PASSWORD;
+const hasPasswordProtection = !!APP_PASSWORD;
+
+if (hasPasswordProtection) {
+  console.log('🔒 Password protection ENABLED');
+} else {
+  console.log('⚠️ No APP_PASSWORD set - app is publicly accessible');
+}
+
+// Simple session store (in production, use Redis or database)
+const sessions = new Map();
+
+// Generate session token
+function generateSessionToken() {
+  return Array.from({ length: 32 }, () => 
+    Math.random().toString(36).charAt(2)
+  ).join('');
+}
+
+// Cookie parser middleware
+app.use((req, res, next) => {
+  const cookies = {};
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    cookieHeader.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      cookies[name] = value;
+    });
+  }
+  req.cookies = cookies;
+  next();
+});
+
+// Auth check middleware
+function requireAuth(req, res, next) {
+  // Skip auth if no password set
+  if (!hasPasswordProtection) {
+    return next();
+  }
+
+  // Allow login endpoint
+  if (req.path === '/api/auth/login' || req.path === '/login.html') {
+    return next();
+  }
+
+  // Check session
+  const sessionToken = req.cookies?.session;
+  if (sessionToken && sessions.has(sessionToken)) {
+    const session = sessions.get(sessionToken);
+    // Check if session is still valid (24 hours)
+    if (Date.now() - session.created < 24 * 60 * 60 * 1000) {
+      return next();
+    }
+    sessions.delete(sessionToken);
+  }
+
+  // Not authenticated
+  if (req.path.startsWith('/api/')) {
+    return res.status(401).json({ error: 'Unauthorized. Please login.' });
+  }
+  
+  // Redirect to login for HTML pages
+  return res.redirect('/login.html');
+}
+
+// Login endpoint
+app.post('/api/auth/login', (req, res) => {
+  const { password } = req.body;
+
+  if (!hasPasswordProtection) {
+    return res.json({ success: true, message: 'No password required' });
+  }
+
+  if (password === APP_PASSWORD) {
+    const token = generateSessionToken();
+    sessions.set(token, { created: Date.now() });
+    
+    res.setHeader('Set-Cookie', `session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`);
+    return res.json({ success: true });
+  }
+
+  return res.status(401).json({ error: 'Invalid password' });
+});
+
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+  const sessionToken = req.cookies?.session;
+  if (sessionToken) {
+    sessions.delete(sessionToken);
+  }
+  res.setHeader('Set-Cookie', 'session=; Path=/; HttpOnly; Max-Age=0');
+  res.json({ success: true });
+});
+
+// Check auth status
+app.get('/api/auth/status', (req, res) => {
+  if (!hasPasswordProtection) {
+    return res.json({ authenticated: true, passwordRequired: false });
+  }
+
+  const sessionToken = req.cookies?.session;
+  const isValid = sessionToken && sessions.has(sessionToken);
+  
+  res.json({ 
+    authenticated: isValid, 
+    passwordRequired: true 
+  });
+});
+
+// Static frontend (with auth for protected pages)
 const publicDir = path.join(process.cwd(), 'public');
+
+// Serve login page without auth
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(publicDir, 'login.html'));
+});
+
+// Apply auth to all other routes
+app.use(requireAuth);
 app.use(express.static(publicDir));
 
 // Ensure uploads directory exists

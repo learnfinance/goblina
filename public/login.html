@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login - Sora Creator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05060a;
+        --accent: #5b8dff;
+        --accent-purple: #bf5af2;
+        --accent-green: #34d399;
+        --text-main: #f3f4ff;
+        --text-muted: #9ca3c7;
+        --danger: #f97373;
+        --border-subtle: #272b3f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        background: radial-gradient(circle at top, #15182b 0, #05060a 55%);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .login-container {
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .login-card {
+        background: linear-gradient(145deg, #0a0e1a, #12162a);
+        border-radius: 24px;
+        border: 1px solid var(--border-subtle);
+        padding: 40px;
+        box-shadow: 
+          0 24px 60px rgba(0, 0, 0, 0.5),
+          0 0 100px rgba(91, 141, 255, 0.1);
+      }
+
+      .logo {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .logo .icon {
+        font-size: 4rem;
+        margin-bottom: 12px;
+        display: block;
+      }
+
+      .logo h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, #5b8dff, #bf5af2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .logo p {
+        margin: 8px 0 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+
+      input[type="password"] {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(10, 12, 22, 0.9);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.2s;
+      }
+
+      input[type="password"]:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(91, 141, 255, 0.2);
+      }
+
+      input[type="password"]::placeholder {
+        color: rgba(156, 163, 199, 0.5);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px 24px;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+        background: linear-gradient(135deg, #5b8dff, #bf5af2);
+        color: #fff;
+        box-shadow: 
+          0 0 20px rgba(91, 141, 255, 0.4),
+          0 0 40px rgba(191, 90, 242, 0.2);
+      }
+
+      .btn:hover {
+        box-shadow: 
+          0 0 30px rgba(91, 141, 255, 0.6),
+          0 0 60px rgba(191, 90, 242, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .error-message {
+        background: rgba(249, 115, 115, 0.1);
+        border: 1px solid rgba(249, 115, 115, 0.3);
+        border-radius: 10px;
+        padding: 12px 16px;
+        color: var(--danger);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .error-message.show {
+        display: block;
+        animation: shake 0.5s ease-in-out;
+      }
+
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        75% { transform: translateX(8px); }
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 24px;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+      }
+
+      /* Animated background */
+      .bg-gradient {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+          radial-gradient(circle at 20% 80%, rgba(91, 141, 255, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(191, 90, 242, 0.15) 0%, transparent 50%);
+        z-index: -1;
+        animation: pulse 8s ease-in-out infinite alternate;
+      }
+
+      @keyframes pulse {
+        0% { opacity: 0.5; }
+        100% { opacity: 1; }
+      }
+
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: none;
+      }
+
+      .btn.loading .loading-spinner {
+        display: block;
+      }
+
+      .btn.loading .btn-text {
+        display: none;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-gradient"></div>
+
+    <div class="login-container">
+      <div class="login-card">
+        <div class="logo">
+          <span class="icon">🎬</span>
+          <h1>Sora Creator</h1>
+          <p>AI-Powered Video Generation</p>
+        </div>
+
+        <div class="error-message" id="error-message">
+          Invalid password. Please try again.
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn" id="submit-btn">
+            <span class="btn-text">🔓 Login</span>
+            <div class="loading-spinner"></div>
+          </button>
+        </form>
+
+        <div class="footer">
+          <p>Protected content for authorized users only</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Check if already authenticated
+      async function checkAuth() {
+        try {
+          const res = await fetch('/api/auth/status');
+          const data = await res.json();
+          
+          if (!data.passwordRequired) {
+            // No password required, redirect to home
+            window.location.href = '/home.html';
+          } else if (data.authenticated) {
+            // Already logged in, redirect to home
+            window.location.href = '/home.html';
+          }
+        } catch (err) {
+          console.error('Auth check failed:', err);
+        }
+      }
+
+      checkAuth();
+
+      // Handle login form
+      const form = document.getElementById('login-form');
+      const submitBtn = document.getElementById('submit-btn');
+      const errorMessage = document.getElementById('error-message');
+      const passwordInput = document.getElementById('password');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const password = passwordInput.value;
+        if (!password) return;
+
+        // Show loading state
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+        errorMessage.classList.remove('show');
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            // Redirect to home on success
+            window.location.href = '/home.html';
+          } else {
+            throw new Error(data.error || 'Login failed');
+          }
+        } catch (err) {
+          errorMessage.textContent = err.message || 'Invalid password. Please try again.';
+          errorMessage.classList.add('show');
+          passwordInput.focus();
+          passwordInput.select();
+        } finally {
+          submitBtn.classList.remove('loading');
+          submitBtn.disabled = false;
+        }
+      });
+
+      // Focus password input on load
+      passwordInput.focus();
+    </script>
+  </body>
+</html>
+

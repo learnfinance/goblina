@@ -248,7 +248,22 @@
           ⚡ Quick Generate
         </a>
       </div>
+      <button onclick="logout()" style="
+        background: rgba(249, 115, 115, 0.15);
+        border: 1px solid rgba(249, 115, 115, 0.3);
+        color: #f97373;
+        padding: 6px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85rem;
+      ">🔒 Logout</button>
     </nav>
+    <script>
+      async function logout() {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login.html';
+      }
+    </script>
 
     <div class="container" style="margin-top: 80px;">
       <h1>🎬 Sora 2 Content Creator</h1>
