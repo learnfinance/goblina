@@ -26,6 +26,9 @@ services:
         sync: false  # Set manually in dashboard
       - key: CLOUDINARY_API_SECRET
         sync: false  # Set manually in dashboard
+      # Google AI for Nano Banana image generation (optional)
+      - key: GOOGLE_AI_API_KEY
+        sync: false  # Set manually in dashboard
 
 databases:
   - name: database1
