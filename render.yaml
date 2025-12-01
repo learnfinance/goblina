@@ -19,6 +19,13 @@ services:
         fromDatabase:
           name: database1
           property: connectionString
+      # Cloudinary for cloud image storage (optional)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false  # Set manually in dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false  # Set manually in dashboard
+      - key: CLOUDINARY_API_SECRET
+        sync: false  # Set manually in dashboard
 
 databases:
   - name: database1

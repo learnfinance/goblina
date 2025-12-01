@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Prompt Templates - Sora Creator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05060a;
+        --panel: #111320;
+        --accent: #5b8dff;
+        --accent-soft: rgba(91, 141, 255, 0.2);
+        --accent-green: #34d399;
+        --accent-purple: #bf5af2;
+        --accent-orange: #f97316;
+        --border-subtle: #272b3f;
+        --text-main: #f3f4ff;
+        --text-muted: #9ca3c7;
+        --danger: #f97373;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+        background: radial-gradient(circle at top, #15182b 0, #05060a 55%);
+        color: var(--text-main);
+        min-height: 100vh;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(17, 19, 32, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(91, 141, 255, 0.2);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        z-index: 1000;
+      }
+
+      nav a.logo {
+        color: var(--text-main);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      nav .nav-links {
+        display: flex;
+        gap: 16px;
+        flex: 1;
+      }
+
+      nav .nav-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        transition: all 0.2s;
+      }
+
+      nav .nav-links a:hover,
+      nav .nav-links a.active {
+        background: rgba(91, 141, 255, 0.1);
+        color: var(--accent);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 80px 24px 40px;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .page-header h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+
+      /* Categories */
+      .categories {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+
+      .category-btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.6);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+      }
+
+      .category-btn:hover {
+        border-color: var(--accent);
+        color: var(--text-main);
+      }
+
+      .category-btn.active {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Templates Grid */
+      .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+      }
+
+      .template-card {
+        background: linear-gradient(145deg, #0a0e1a, #12162a);
+        border-radius: 16px;
+        border: 1px solid var(--border-subtle);
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+
+      .template-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(91, 141, 255, 0.15);
+      }
+
+      .template-card .card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .template-card .card-header .icon {
+        font-size: 2rem;
+      }
+
+      .template-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .template-card .category-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      .badge-work { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); }
+      .badge-relationship { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+      .badge-life { background: rgba(52, 211, 153, 0.2); color: var(--accent-green); }
+      .badge-trending { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+      .template-card .card-body {
+        padding: 16px 20px;
+      }
+
+      .template-card .description {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+        line-height: 1.5;
+      }
+
+      .template-card .example-topics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+
+      .template-card .topic-tag {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(91, 141, 255, 0.1);
+        border: 1px solid rgba(91, 141, 255, 0.2);
+        color: var(--text-muted);
+      }
+
+      .template-card .use-count {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+      }
+
+      .btn {
+        border-radius: 999px;
+        border: none;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #5b8dff, #bf5af2);
+        color: #fff;
+        box-shadow: 0 0 14px rgba(91, 141, 255, 0.5);
+      }
+
+      .btn-secondary {
+        background: rgba(15, 23, 42, 0.85);
+        color: var(--text-main);
+        border: 1px solid var(--border-subtle);
+      }
+
+      .template-card .card-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .template-card .card-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      /* Save Template Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal {
+        background: linear-gradient(145deg, #0a0e1a, #12162a);
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        width: 90%;
+        max-width: 500px;
+        padding: 24px;
+      }
+
+      .modal h2 {
+        margin: 0 0 20px;
+      }
+
+      label {
+        display: block;
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+        color: var(--text-muted);
+      }
+
+      input, select, textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border-subtle);
+        background: rgba(10, 12, 22, 0.9);
+        color: var(--text-main);
+        font-family: inherit;
+        font-size: 0.9rem;
+        margin-bottom: 16px;
+      }
+
+      input:focus, select:focus, textarea:focus {
+        border-color: var(--accent);
+        outline: none;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        background: rgba(15, 23, 42, 0.4);
+        border-radius: 20px;
+        border: 2px dashed var(--border-subtle);
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: var(--panel);
+        border: 1px solid var(--accent-green);
+        border-radius: 12px;
+        padding: 16px 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s;
+        z-index: 3000;
+      }
+
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav>
+      <a href="/home.html" class="logo">🎬 Sora Creator</a>
+      <div class="nav-links">
+        <a href="/characters.html">👤 My Characters</a>
+        <a href="/history.html">📜 History</a>
+        <a href="/templates.html" class="active">📚 Templates</a>
+        <a href="/creator.html">🧙‍♀️ Creator Wizard</a>
+        <a href="/index.html">⚡ Quick Generate</a>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="page-header">
+        <div>
+          <h1>📚 Prompt Templates</h1>
+          <p style="color: var(--text-muted); margin: 8px 0 0;">Pre-made templates for common content scenarios</p>
+        </div>
+        <button class="btn btn-primary" onclick="openSaveModal()">
+          ➕ Save New Template
+        </button>
+      </div>
+
+      <!-- Categories -->
+      <div class="categories">
+        <button class="category-btn active" data-category="all">All Templates</button>
+        <button class="category-btn" data-category="work">💼 Work</button>
+        <button class="category-btn" data-category="relationship">💕 Relationships</button>
+        <button class="category-btn" data-category="life">🌟 Life</button>
+        <button class="category-btn" data-category="trending">🔥 Trending</button>
+      </div>
+
+      <!-- Templates Grid -->
+      <div class="templates-grid" id="templates-grid">
+        <!-- Built-in templates + user saved -->
+      </div>
+
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">📚</div>
+        <h3>No Templates Found</h3>
+        <p style="color: var(--text-muted);">Save your first template or try a different category</p>
+      </div>
+    </div>
+
+    <!-- Save Template Modal -->
+    <div class="modal-overlay" id="save-modal">
+      <div class="modal">
+        <h2>💾 Save Template</h2>
+        <form id="save-form">
+          <label>Template Name</label>
+          <input type="text" id="template-name" placeholder="e.g., Office Monday Blues" required />
+
+          <label>Category</label>
+          <select id="template-category" required>
+            <option value="work">💼 Work</option>
+            <option value="relationship">💕 Relationships</option>
+            <option value="life">🌟 Life</option>
+            <option value="trending">🔥 Trending</option>
+          </select>
+
+          <label>Topic/Prompt</label>
+          <textarea id="template-prompt" rows="4" placeholder="The scenario or topic..." required></textarea>
+
+          <label>Tags (comma separated)</label>
+          <input type="text" id="template-tags" placeholder="office, monday, work, boss" />
+
+          <div style="display: flex; gap: 12px; margin-top: 8px;">
+            <button type="button" class="btn btn-secondary" onclick="closeSaveModal()" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Save Template</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      // Built-in templates
+      const builtInTemplates = [
+        {
+          id: 'builtin-1',
+          name: 'Slack "Quick Question"',
+          category: 'work',
+          icon: '💬',
+          description: 'When someone says "quick question" but it\'s definitely not quick',
+          prompt: 'Slack messages that start with "quick question" and are definitely NOT quick questions',
+          tags: ['slack', 'work', 'questions', 'office'],
+          use_count: 150
+        },
+        {
+          id: 'builtin-2',
+          name: 'Micromanaging Boss',
+          category: 'work',
+          icon: '👔',
+          description: 'The boss who needs to approve everything including your breathing',
+          prompt: 'Micromanaging boss who checks on you every 5 minutes',
+          tags: ['boss', 'micromanage', 'work', 'office'],
+          use_count: 120
+        },
+        {
+          id: 'builtin-3',
+          name: 'Food Disagreement',
+          category: 'relationship',
+          icon: '🍕',
+          description: 'When you want fried chicken but they want salad',
+          prompt: 'Boyfriend wants healthy food but I want fried chicken',
+          tags: ['food', 'relationship', 'boyfriend', 'dinner'],
+          use_count: 200
+        },
+        {
+          id: 'builtin-4',
+          name: 'Sunday Scaries',
+          category: 'life',
+          icon: '😰',
+          description: 'That feeling when Sunday evening hits',
+          prompt: 'Sunday evening anxiety about Monday morning',
+          tags: ['sunday', 'anxiety', 'monday', 'weekend'],
+          use_count: 180
+        },
+        {
+          id: 'builtin-5',
+          name: 'Adulting Is Hard',
+          category: 'life',
+          icon: '📋',
+          description: 'When you realize you have to do taxes, laundry, AND cook',
+          prompt: 'Realizing you have to be an adult and do responsible things',
+          tags: ['adulting', 'responsibilities', 'life', 'struggle'],
+          use_count: 160
+        },
+        {
+          id: 'builtin-6',
+          name: 'Meeting That Should Be Email',
+          category: 'work',
+          icon: '📧',
+          description: 'The classic "this could have been an email" moment',
+          prompt: 'Sitting in a meeting that definitely should have been an email',
+          tags: ['meeting', 'email', 'work', 'office'],
+          use_count: 140
+        },
+        {
+          id: 'builtin-7',
+          name: 'Netflix Decision Paralysis',
+          category: 'life',
+          icon: '📺',
+          description: 'Spending more time choosing what to watch than actually watching',
+          prompt: 'Scrolling through Netflix for 45 minutes and ending up watching nothing',
+          tags: ['netflix', 'tv', 'decision', 'evening'],
+          use_count: 130
+        },
+        {
+          id: 'builtin-8',
+          name: 'Gym Motivation Fading',
+          category: 'trending',
+          icon: '💪',
+          description: 'New year resolution hitting different in February',
+          prompt: 'Gym motivation slowly dying after the first week of January',
+          tags: ['gym', 'fitness', 'motivation', 'newyear'],
+          use_count: 170
+        }
+      ];
+
+      let allTemplates = [...builtInTemplates];
+      let currentCategory = 'all';
+
+      // Load saved templates from database
+      async function loadSavedTemplates() {
+        try {
+          const res = await fetch('/api/prompts/library');
+          const saved = await res.json();
+          allTemplates = [...builtInTemplates, ...saved.map(t => ({
+            ...t,
+            icon: '📝',
+            description: t.text_prompt?.substring(0, 80) + '...' || '',
+            prompt: t.text_prompt,
+            tags: t.tags || []
+          }))];
+          renderTemplates();
+        } catch (err) {
+          console.error('Failed to load saved templates:', err);
+          renderTemplates();
+        }
+      }
+
+      function renderTemplates() {
+        const grid = document.getElementById('templates-grid');
+        const empty = document.getElementById('empty-state');
+
+        let filtered = allTemplates;
+        if (currentCategory !== 'all') {
+          filtered = allTemplates.filter(t => t.category === currentCategory);
+        }
+
+        if (filtered.length === 0) {
+          empty.style.display = 'block';
+          grid.style.display = 'none';
+          return;
+        }
+
+        empty.style.display = 'none';
+        grid.style.display = 'grid';
+        grid.innerHTML = '';
+
+        filtered.forEach(template => {
+          const badgeClass = `badge-${template.category}`;
+          const card = document.createElement('div');
+          card.className = 'template-card';
+          card.innerHTML = `
+            <div class="card-header">
+              <span class="icon">${template.icon || '📝'}</span>
+              <div>
+                <h3>${template.name}</h3>
+                <span class="category-badge ${badgeClass}">${template.category}</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="description">${template.description}</div>
+              <div class="example-topics">
+                ${(template.tags || []).slice(0, 4).map(t => `<span class="topic-tag">#${t}</span>`).join('')}
+              </div>
+              <div class="use-count">📊 Used ${template.use_count || 0} times</div>
+              <div class="card-actions">
+                <button class="btn btn-secondary" onclick="copyPrompt('${template.id}')">📋 Copy</button>
+                <button class="btn btn-primary" onclick="useTemplate('${template.id}')">🎬 Use</button>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+
+      // Category filter
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentCategory = btn.dataset.category;
+          renderTemplates();
+        });
+      });
+
+      // Use template - go to creator with topic
+      function useTemplate(id) {
+        const template = allTemplates.find(t => t.id === id);
+        if (!template) return;
+
+        localStorage.setItem('templateTopic', template.prompt);
+        window.location.href = '/creator.html';
+      }
+
+      // Copy prompt
+      function copyPrompt(id) {
+        const template = allTemplates.find(t => t.id === id);
+        if (!template) return;
+
+        navigator.clipboard.writeText(template.prompt);
+        showToast('📋 Prompt copied to clipboard!');
+      }
+
+      // Save modal
+      function openSaveModal() {
+        document.getElementById('save-modal').classList.add('active');
+      }
+
+      function closeSaveModal() {
+        document.getElementById('save-modal').classList.remove('active');
+      }
+
+      // Save template
+      document.getElementById('save-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('template-name').value;
+        const category = document.getElementById('template-category').value;
+        const prompt = document.getElementById('template-prompt').value;
+        const tagsStr = document.getElementById('template-tags').value;
+        const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t);
+
+        try {
+          await fetch('/api/prompts/library/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: 'tpl_' + Date.now(),
+              name,
+              category,
+              structuredPrompt: { topic: prompt },
+              textPrompt: prompt,
+              tags
+            })
+          });
+
+          showToast('✅ Template saved!');
+          closeSaveModal();
+          document.getElementById('save-form').reset();
+          loadSavedTemplates();
+        } catch (err) {
+          showToast('❌ Failed to save template');
+        }
+      });
+
+      function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      // Initialize
+      loadSavedTemplates();
+    </script>
+  </body>
+</html>
+

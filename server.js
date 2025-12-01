@@ -8,12 +8,58 @@ import fetch from 'node-fetch';
 import FormData from 'form-data';
 import sharp from 'sharp';
 import OpenAI from 'openai';
+import { v2 as cloudinary } from 'cloudinary';
 import * as db from './db.js';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// ==========================================
+// CLOUDINARY CONFIGURATION
+// ==========================================
+const hasCloudinary = !!(
+  process.env.CLOUDINARY_CLOUD_NAME && 
+  process.env.CLOUDINARY_API_KEY && 
+  process.env.CLOUDINARY_API_SECRET
+);
+
+if (hasCloudinary) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+  console.log('☁️ Cloudinary configured - image storage enabled');
+} else {
+  console.log('⚠️ Cloudinary not configured - images will not be stored permanently');
+}
+
+/**
+ * Upload image to Cloudinary
+ * @param {string} filePath - Path to the image file
+ * @param {string} folder - Cloudinary folder name
+ * @returns {Promise<string|null>} - Image URL or null if failed
+ */
+async function uploadToCloudinary(filePath, folder = 'goblina-characters') {
+  if (!hasCloudinary) return null;
+  
+  try {
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder: folder,
+      resource_type: 'image',
+      transformation: [
+        { width: 800, height: 800, crop: 'limit' },
+        { quality: 'auto' }
+      ]
+    });
+    return result.secure_url;
+  } catch (err) {
+    console.error('Cloudinary upload error:', err);
+    return null;
+  }
+}
 
 // Basic checks
 const hasOpenAI = !!process.env.OPENAI_API_KEY;
@@ -245,14 +291,21 @@ Be specific and detailed. Extract actual hex color codes from dominant colors in
 
     const styleGuide = JSON.parse(response.choices[0].message.content);
 
+    // Upload to Cloudinary if configured (before cleaning up local file)
+    let imageUrl = null;
+    if (hasCloudinary) {
+      imageUrl = await uploadToCloudinary(file.path);
+      console.log('☁️ Character image uploaded:', imageUrl ? 'success' : 'failed');
+    }
+
     // Clean up uploaded file
     fs.unlink(file.path, () => {});
 
-    // Return character profile
+    // Return character profile with cloud image URL
     const characterProfile = {
       id: Date.now().toString(),
       name: characterName || 'Unnamed Character',
-      imageUrl: null, // We could save this to cloud storage
+      imageUrl: imageUrl,
       styleGuide,
       createdAt: new Date().toISOString()
     };
@@ -1336,6 +1389,27 @@ if (hasDatabase) {
     } catch (err) {
       console.error('Error getting video:', err);
       res.status(500).json({ error: 'Failed to get video', details: err.message });
+    }
+  });
+
+  // Save a video
+  app.post('/api/videos/save', async (req, res) => {
+    try {
+      const { id, projectId, soraJobId, prompt, structuredPrompt, status, durationSeconds } = req.body;
+      if (!id || !soraJobId) {
+        return res.status(400).json({ error: 'id and soraJobId are required' });
+      }
+      const video = await db.saveVideo(id, projectId, soraJobId, prompt, structuredPrompt);
+      
+      // Update status if completed
+      if (status === 'completed') {
+        await db.updateVideoStatus(id, 'completed');
+      }
+      
+      res.json(video);
+    } catch (err) {
+      console.error('Error saving video:', err);
+      res.status(500).json({ error: 'Failed to save video', details: err.message });
     }
   });
 }

@@ -525,6 +525,13 @@
           border-radius: 8px;
           transition: all 0.2s;
         ">📜 History</a>
+        <a href="/templates.html" style="
+          color: var(--text-muted);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s;
+        ">📚 Templates</a>
         <a href="/creator.html" style="
           color: var(--accent);
           text-decoration: none;
@@ -831,6 +838,13 @@
           handleSavedCharacterSelect();
           localStorage.removeItem('selectedCharacterId');
         }
+
+        // Check if coming from Templates page with a topic
+        const templateTopic = localStorage.getItem('templateTopic');
+        if (templateTopic) {
+          document.getElementById('topic').value = templateTopic;
+          localStorage.removeItem('templateTopic');
+        }
       });
 
       async function loadSavedCharacters() {
@@ -1091,6 +1105,27 @@
 
           renderScenarios(scenarios, list);
           document.getElementById('next-to-step-4').classList.remove('hidden');
+
+          // AUTO-SAVE PROJECT TO DATABASE
+          try {
+            const projectId = 'proj_' + Date.now();
+            await fetch('/api/projects/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: projectId,
+                characterId: characterProfile?.id || null,
+                topic: topic,
+                personalityPreset: selectedPersonality,
+                scenarios: scenarios
+              })
+            });
+            // Store project ID for later use
+            window.currentProjectId = projectId;
+            console.log('✅ Project saved:', projectId);
+          } catch (saveErr) {
+            console.warn('Could not save project:', saveErr);
+          }
         } catch (err) {
           error.textContent = err.message;
           error.classList.remove('hidden');
@@ -1188,10 +1223,28 @@
               </span>
             </h3>
             
+            <!-- TEXT OVERLAY EDITOR -->
+            <div style="margin-bottom: 12px; padding: 12px; background: rgba(91, 141, 255, 0.1); border-radius: 8px; border: 1px solid rgba(91, 141, 255, 0.2);">
+              <label style="display: block; font-size: 0.8rem; color: var(--accent); margin-bottom: 6px;">
+                📝 Text Overlay (Caption)
+              </label>
+              <input 
+                type="text" 
+                class="text-overlay-input"
+                data-idx="${idx}"
+                value="${scene.textOverlay || ''}"
+                placeholder="Add caption text that appears on screen..."
+                style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main); font-size: 0.9rem;"
+              />
+              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">
+                💡 This text will be included in the AI prompt for on-screen display
+              </div>
+            </div>
+            
             <div class="meta-info">
               <div class="meta-item">
                 <strong>Duration</strong>
-                ${scene.duration || 8} seconds
+                ${videoSettings.duration} seconds
               </div>
               ${scene.dialogue ? `
                 <div class="meta-item">
@@ -1243,6 +1296,23 @@
           editor.addEventListener('change', (e) => {
             const idx = parseInt(e.target.dataset.idx);
             scenarios[idx].prompt = e.target.value;
+          });
+        });
+
+        // Update text overlays when edited
+        document.querySelectorAll('.text-overlay-input').forEach(input => {
+          input.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            scenarios[idx].textOverlay = e.target.value;
+            
+            // Also update the prompt to include text overlay instruction
+            if (e.target.value) {
+              const promptEditor = document.querySelector(`.prompt-editor[data-idx="${idx}"]`);
+              if (promptEditor && !promptEditor.value.includes('TEXT ON SCREEN:')) {
+                promptEditor.value += `\n\nTEXT ON SCREEN: "${e.target.value}" - Display this text prominently in the video.`;
+                scenarios[idx].prompt = promptEditor.value;
+              }
+            }
           });
         });
       }
@@ -1381,6 +1451,26 @@
 
                   // Show action buttons
                   document.getElementById(`actions-${i}`).style.display = 'flex';
+
+                  // SAVE VIDEO TO DATABASE
+                  try {
+                    await fetch('/api/videos/save', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        id: 'vid_' + Date.now() + '_' + i,
+                        projectId: window.currentProjectId || null,
+                        soraJobId: videoJob.id,
+                        prompt: scene.prompt || scene.sceneDescription,
+                        structuredPrompt: scene,
+                        status: 'completed',
+                        durationSeconds: videoSettings.duration
+                      })
+                    });
+                    console.log('✅ Video saved to DB');
+                  } catch (saveErr) {
+                    console.warn('Could not save video:', saveErr);
+                  }
 
                 } else if (jobStatus.status === 'failed') {
                   throw new Error('Video generation failed');
