@@ -1102,6 +1102,8 @@ app.post('/api/images/generate', async (req, res) => {
     });
 
     let cloudinaryUrl = null;
+    let cloudinaryPublicId = null;
+    let savedImageId = null;
 
     // Optionally save to Cloudinary
     if (shouldSave && hasCloudinary && result.imageBase64) {
@@ -1115,7 +1117,34 @@ app.post('/api/images/generate', async (req, res) => {
           }
         );
         cloudinaryUrl = uploadResult.secure_url;
+        cloudinaryPublicId = uploadResult.public_id;
         console.log('☁️ Scene image saved to Cloudinary:', cloudinaryUrl);
+
+        // Auto-save to database if configured
+        if (hasDatabase) {
+          try {
+            savedImageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await db.saveGeneratedImage({
+              id: savedImageId,
+              projectId: req.body.projectId || null,
+              characterId: req.body.characterId || null,
+              prompt: prompt,
+              cloudinaryUrl: cloudinaryUrl,
+              cloudinaryPublicId: cloudinaryPublicId,
+              aspectRatio: aspectRatio,
+              resolution: resolution,
+              model: model,
+              sceneIndex: req.body.sceneIndex || null,
+              metadata: {
+                characterName: characterName,
+                enhanced: enhancePrompt
+              }
+            });
+            console.log('💾 Image saved to database:', savedImageId);
+          } catch (dbErr) {
+            console.warn('Failed to save image to database:', dbErr.message);
+          }
+        }
       } catch (uploadErr) {
         console.warn('Failed to save image to Cloudinary:', uploadErr.message);
       }
@@ -1126,6 +1155,7 @@ app.post('/api/images/generate', async (req, res) => {
       imageBase64: result.imageBase64,
       mimeType: result.mimeType,
       imageUrl: cloudinaryUrl,
+      imageId: savedImageId,
       text: result.text,
       model,
       aspectRatio,
@@ -1226,6 +1256,9 @@ app.post('/api/images/generate-batch', async (req, res) => {
 
         // Save to Cloudinary
         let cloudinaryUrl = null;
+        let cloudinaryPublicId = null;
+        let savedImageId = null;
+        
         if (hasCloudinary && result.imageBase64) {
           try {
             const uploadResult = await cloudinary.uploader.upload(
@@ -1236,6 +1269,34 @@ app.post('/api/images/generate-batch', async (req, res) => {
               }
             );
             cloudinaryUrl = uploadResult.secure_url;
+            cloudinaryPublicId = uploadResult.public_id;
+
+            // Auto-save to database if configured
+            if (hasDatabase) {
+              try {
+                savedImageId = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                await db.saveGeneratedImage({
+                  id: savedImageId,
+                  projectId: req.body.projectId || null,
+                  characterId: req.body.characterId || null,
+                  prompt: scene.prompt,
+                  cloudinaryUrl: cloudinaryUrl,
+                  cloudinaryPublicId: cloudinaryPublicId,
+                  aspectRatio: scene.aspectRatio || aspectRatio,
+                  resolution: scene.resolution || resolution,
+                  model: model,
+                  sceneIndex: i,
+                  metadata: {
+                    characterName: characterName,
+                    enhanced: enhancePrompt,
+                    batchIndex: i
+                  }
+                });
+                console.log(`💾 Scene ${i + 1} image saved to database:`, savedImageId);
+              } catch (dbErr) {
+                console.warn(`Failed to save scene ${i + 1} to database:`, dbErr.message);
+              }
+            }
           } catch (uploadErr) {
             console.warn(`Failed to save scene ${i + 1} to Cloudinary:`, uploadErr.message);
           }
@@ -1247,6 +1308,7 @@ app.post('/api/images/generate-batch', async (req, res) => {
           imageBase64: result.imageBase64,
           mimeType: result.mimeType,
           imageUrl: cloudinaryUrl,
+          imageId: savedImageId,
           text: result.text
         });
       } catch (sceneErr) {
@@ -1858,6 +1920,24 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
       imageOriginalName: imageOriginalName
     });
 
+    // Auto-save video job to database
+    let savedVideoId = null;
+    if (hasDatabase && videoJob?.id) {
+      try {
+        savedVideoId = `vid_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await db.saveVideo(
+          savedVideoId,
+          req.body.projectId || null,
+          videoJob.id,
+          prompt,
+          req.body.structuredPrompt || null
+        );
+        console.log('💾 Video job saved to database:', savedVideoId, '-> Sora:', videoJob.id);
+      } catch (dbErr) {
+        console.warn('Failed to save video to database:', dbErr.message);
+      }
+    }
+
     // Clean up uploaded files asynchronously
     if (file?.path) fs.unlink(file.path, () => {});
     if (tempImagePath) fs.unlink(tempImagePath, () => {});
@@ -1865,7 +1945,10 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
       fs.unlink(processedImagePath, () => {});
     }
 
-    res.json(videoJob);
+    res.json({
+      ...videoJob,
+      savedVideoId // Include our database ID in response
+    });
   } catch (err) {
     console.error(err);
     // Clean up on error
@@ -1917,6 +2000,24 @@ app.get('/api/status/:id', async (req, res) => {
     }
 
     const json = await response.json();
+      
+      // Auto-update video status in database when completed
+      if (hasDatabase && json.status === 'completed' && json.url) {
+        try {
+          await db.updateVideoStatus(id, 'completed', json.url);
+          console.log('💾 Video status updated in database:', id, '-> completed with URL');
+        } catch (dbErr) {
+          console.warn('Failed to update video status in database:', dbErr.message);
+        }
+      } else if (hasDatabase && json.status === 'failed') {
+        try {
+          await db.updateVideoStatus(id, 'failed');
+          console.log('💾 Video status updated in database:', id, '-> failed');
+        } catch (dbErr) {
+          console.warn('Failed to update video status in database:', dbErr.message);
+        }
+      }
+      
       return res.json(json);
   } catch (err) {
       lastError = err;
@@ -2339,6 +2440,91 @@ if (hasDatabase) {
     } catch (err) {
       console.error('Error listing favorites:', err);
       res.status(500).json({ error: 'Failed to list favorites', details: err.message });
+    }
+  });
+
+  // ==========================================
+  // GENERATED IMAGES ENDPOINTS
+  // ==========================================
+
+  // List all generated images
+  app.get('/api/generated-images', async (req, res) => {
+    try {
+      const { projectId, characterId, favorites, limit, offset } = req.query;
+      const images = await db.listGeneratedImages({
+        projectId,
+        characterId,
+        favoritesOnly: favorites === 'true',
+        limit: parseInt(limit) || 50,
+        offset: parseInt(offset) || 0
+      });
+      res.json(images);
+    } catch (err) {
+      console.error('Error listing generated images:', err);
+      res.status(500).json({ error: 'Failed to list images', details: err.message });
+    }
+  });
+
+  // Get recent images for gallery
+  app.get('/api/generated-images/recent', async (req, res) => {
+    try {
+      const { limit } = req.query;
+      const images = await db.getRecentImages(parseInt(limit) || 20);
+      res.json(images);
+    } catch (err) {
+      console.error('Error getting recent images:', err);
+      res.status(500).json({ error: 'Failed to get recent images', details: err.message });
+    }
+  });
+
+  // Get a specific generated image
+  app.get('/api/generated-images/:id', async (req, res) => {
+    try {
+      const image = await db.getGeneratedImage(req.params.id);
+      if (!image) {
+        return res.status(404).json({ error: 'Image not found' });
+      }
+      res.json(image);
+    } catch (err) {
+      console.error('Error getting image:', err);
+      res.status(500).json({ error: 'Failed to get image', details: err.message });
+    }
+  });
+
+  // Toggle favorite on an image
+  app.post('/api/generated-images/favorite', async (req, res) => {
+    try {
+      const { id, isFavorite } = req.body;
+      if (!id) {
+        return res.status(400).json({ error: 'id is required' });
+      }
+      const image = await db.updateImageFavorite(id, isFavorite);
+      res.json(image || { success: true });
+    } catch (err) {
+      console.error('Error updating image favorite:', err);
+      res.status(500).json({ error: 'Failed to update favorite', details: err.message });
+    }
+  });
+
+  // Delete a generated image
+  app.delete('/api/generated-images/:id', async (req, res) => {
+    try {
+      await db.deleteGeneratedImage(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      res.status(500).json({ error: 'Failed to delete image', details: err.message });
+    }
+  });
+
+  // Get image count for a project
+  app.get('/api/generated-images/count/:projectId', async (req, res) => {
+    try {
+      const count = await db.getImageCountByProject(req.params.projectId);
+      res.json({ count });
+    } catch (err) {
+      console.error('Error getting image count:', err);
+      res.status(500).json({ error: 'Failed to get count', details: err.message });
     }
   });
 

@@ -87,11 +87,31 @@ export async function initDatabase() {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
+      -- Generated images table: stores all AI-generated images
+      CREATE TABLE IF NOT EXISTS generated_images (
+        id VARCHAR(50) PRIMARY KEY,
+        project_id VARCHAR(50) REFERENCES projects(id) ON DELETE SET NULL,
+        character_id VARCHAR(50) REFERENCES characters(id) ON DELETE SET NULL,
+        prompt TEXT,
+        cloudinary_url TEXT NOT NULL,
+        cloudinary_public_id TEXT,
+        aspect_ratio VARCHAR(20),
+        resolution VARCHAR(10),
+        model VARCHAR(100),
+        scene_index INTEGER,
+        metadata JSONB,
+        is_favorite BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
       -- Create indexes for faster queries
       CREATE INDEX IF NOT EXISTS idx_projects_character ON projects(character_id);
       CREATE INDEX IF NOT EXISTS idx_videos_project ON videos(project_id);
       CREATE INDEX IF NOT EXISTS idx_videos_status ON videos(status);
       CREATE INDEX IF NOT EXISTS idx_prompt_library_category ON prompt_library(category);
+      CREATE INDEX IF NOT EXISTS idx_generated_images_project ON generated_images(project_id);
+      CREATE INDEX IF NOT EXISTS idx_generated_images_character ON generated_images(character_id);
+      CREATE INDEX IF NOT EXISTS idx_generated_images_created ON generated_images(created_at DESC);
     `);
     
     console.log('✅ Database tables initialized');
@@ -273,6 +293,136 @@ export async function updateVideoRating(id, rating) {
     [rating, id]
   );
   return result.rows[0];
+}
+
+// ==========================================
+// GENERATED IMAGE OPERATIONS
+// ==========================================
+
+/**
+ * Save a generated image to the database
+ * @param {object} imageData - Image data to save
+ * @returns {Promise<object>} - Saved image record
+ */
+export async function saveGeneratedImage(imageData) {
+  const {
+    id,
+    projectId = null,
+    characterId = null,
+    prompt,
+    cloudinaryUrl,
+    cloudinaryPublicId = null,
+    aspectRatio = '9:16',
+    resolution = '2K',
+    model = 'gemini-2.5-flash-image',
+    sceneIndex = null,
+    metadata = null
+  } = imageData;
+
+  const result = await pool.query(
+    `INSERT INTO generated_images 
+     (id, project_id, character_id, prompt, cloudinary_url, cloudinary_public_id, 
+      aspect_ratio, resolution, model, scene_index, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (id) DO UPDATE SET
+       cloudinary_url = EXCLUDED.cloudinary_url,
+       cloudinary_public_id = EXCLUDED.cloudinary_public_id,
+       metadata = COALESCE(EXCLUDED.metadata, generated_images.metadata)
+     RETURNING *`,
+    [id, projectId, characterId, prompt, cloudinaryUrl, cloudinaryPublicId, 
+     aspectRatio, resolution, model, sceneIndex, metadata ? JSON.stringify(metadata) : null]
+  );
+  return result.rows[0];
+}
+
+/**
+ * Get a generated image by ID
+ */
+export async function getGeneratedImage(id) {
+  const result = await pool.query(
+    'SELECT * FROM generated_images WHERE id = $1',
+    [id]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * List generated images with optional filters
+ */
+export async function listGeneratedImages(filters = {}) {
+  const { projectId, characterId, favoritesOnly, limit = 50, offset = 0 } = filters;
+  
+  let query = 'SELECT * FROM generated_images';
+  const params = [];
+  const conditions = [];
+  
+  if (projectId) {
+    conditions.push(`project_id = $${params.length + 1}`);
+    params.push(projectId);
+  }
+  
+  if (characterId) {
+    conditions.push(`character_id = $${params.length + 1}`);
+    params.push(characterId);
+  }
+  
+  if (favoritesOnly) {
+    conditions.push('is_favorite = TRUE');
+  }
+  
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+  
+  query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+  params.push(limit, offset);
+  
+  const result = await pool.query(query, params);
+  return result.rows;
+}
+
+/**
+ * Toggle favorite status for an image
+ */
+export async function updateImageFavorite(id, isFavorite) {
+  const result = await pool.query(
+    `UPDATE generated_images SET is_favorite = $1 WHERE id = $2 RETURNING *`,
+    [isFavorite, id]
+  );
+  return result.rows[0];
+}
+
+/**
+ * Delete a generated image
+ */
+export async function deleteGeneratedImage(id) {
+  await pool.query('DELETE FROM generated_images WHERE id = $1', [id]);
+}
+
+/**
+ * Get image count for a project
+ */
+export async function getImageCountByProject(projectId) {
+  const result = await pool.query(
+    'SELECT COUNT(*) as count FROM generated_images WHERE project_id = $1',
+    [projectId]
+  );
+  return parseInt(result.rows[0].count, 10);
+}
+
+/**
+ * Get recent images (for gallery/history)
+ */
+export async function getRecentImages(limit = 20) {
+  const result = await pool.query(
+    `SELECT gi.*, c.name as character_name 
+     FROM generated_images gi
+     LEFT JOIN characters c ON gi.character_id = c.id
+     ORDER BY gi.created_at DESC 
+     LIMIT $1`,
+    [limit]
+  );
+  return result.rows;
 }
 
 // ==========================================
