@@ -166,6 +166,114 @@ const NANO_BANANA_ASPECT_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:
 const NANO_BANANA_RESOLUTIONS = ['1K', '2K', '4K'];
 
 /**
+ * Build a detailed character description for high-fidelity preservation
+ * This ensures the character's appearance is consistently described in every prompt
+ * 
+ * @param {object} styleGuide - The character's style guide from analysis
+ * @param {string} characterName - The character's name
+ * @returns {string} - Detailed character description block
+ */
+function buildDetailedCharacterDescription(styleGuide, characterName = 'Ms. Goblina') {
+  if (!styleGuide) {
+    // Default Ms. Goblina description for consistent character preservation
+    return `
+CHARACTER DESCRIPTION (preserve these exact details):
+Name: ${characterName}
+Species: Animated goblin woman
+Skin: Vibrant green skin with subtle texture, consistent saturation throughout
+Face: Expressive large eyes with dark pupils, small pointed nose, wide mouth capable of exaggerated expressions, pointed ears
+Build: Petite, feminine figure with stylized proportions
+Hair: Dark hair, usually styled casually or messy
+Signature Features: Gold hoop earrings, multiple gold bangles on wrists, casual modern clothing
+Art Style: 3D Pixar-like animated character, smooth surfaces, soft lighting, cartoon proportions
+Expression Style: Highly expressive, emotive, capable of exaggerated reactions`;
+  }
+
+  const char = styleGuide.character || {};
+  const acc = styleGuide.accessories || {};
+  
+  return `
+CHARACTER DESCRIPTION (preserve these exact details):
+Name: ${characterName}
+Physical Appearance: ${char.appearance || 'Green-skinned goblin woman, petite feminine build'}
+Skin: ${char.body?.skin_tone || 'Vibrant green skin with consistent saturation'}
+Face: ${char.face?.description || 'Expressive large eyes, small pointed nose, wide mouth, pointed ears'}
+Hair: ${char.hair?.color || 'Dark'} hair, ${char.hair?.style || 'casual style'}
+Build: ${char.body?.build || 'Petite, feminine figure with stylized proportions'}
+Signature Jewelry: ${acc.jewelry?.earrings || 'Gold hoop earrings'}, ${acc.jewelry?.wrist || 'gold bangles on wrists'}
+Clothing Style: ${char.details || 'Casual modern clothing - hoodies, tank tops, comfortable wear'}
+Art Style: ${char.visualStyle || '3D Pixar-like animated character, smooth surfaces, soft lighting'}
+Color Palette: ${char.colorPalette?.join(', ') || '#8BC34A (green skin), #FFD700 (gold accents), warm earth tones'}
+Expression Style: Highly expressive, emotive, capable of exaggerated reactions
+
+CRITICAL: Maintain exact skin tone, facial features, jewelry, and art style across all generations.`;
+}
+
+/**
+ * Enhance a prompt with best practices for Nano Banana image generation
+ * - Hyper-specific details
+ * - Context and intent
+ * - Step-by-step structure for complex scenes
+ * - Semantic negative prompts (positive descriptions)
+ * - Camera/composition language
+ * 
+ * @param {string} basePrompt - The original prompt
+ * @param {object} options - Enhancement options
+ * @returns {string} - Enhanced prompt
+ */
+function enhancePromptForNanoBanana(basePrompt, options = {}) {
+  const {
+    characterDescription = '',
+    scene = {},
+    aspectRatio = '9:16',
+    intent = 'social media content'
+  } = options;
+
+  // Determine camera language based on aspect ratio
+  const cameraLanguage = {
+    '9:16': 'vertical mobile-first composition, portrait orientation optimized for Instagram Reels/TikTok',
+    '16:9': 'cinematic widescreen composition, landscape orientation for YouTube/desktop',
+    '1:1': 'square composition, centered framing optimized for Instagram feed'
+  }[aspectRatio] || 'balanced composition';
+
+  // Build step-by-step structured prompt
+  const parts = [];
+
+  // Step 1: Context and Intent
+  parts.push(`CONTEXT: Creating ${intent} featuring an animated character. Style should be consistent with modern 3D animation (Pixar/DreamWorks quality).`);
+
+  // Step 2: Character (HIGH PRIORITY - preserve details)
+  if (characterDescription) {
+    parts.push(characterDescription);
+  }
+
+  // Step 3: Scene Description
+  parts.push(`SCENE: ${basePrompt}`);
+
+  // Step 4: Camera and Composition
+  const cameraDetails = scene.photography || {};
+  parts.push(`
+CAMERA & COMPOSITION:
+- Framing: ${cameraLanguage}
+- Shot Type: ${cameraDetails.shot_type || 'medium shot focusing on character'}
+- Angle: ${cameraDetails.angle || 'eye-level, engaging perspective'}
+- Lighting: ${scene.background?.lighting || 'soft, flattering lighting that highlights the character'}
+- Depth: Clear foreground focus with slightly blurred background for depth`);
+
+  // Step 5: Quality Directives (positive semantic descriptions instead of negative prompts)
+  parts.push(`
+QUALITY DIRECTIVES:
+- Render with clean, professional quality suitable for social media
+- Character should be the clear focal point of the image
+- Background should complement but not distract from the character
+- Maintain consistent art style throughout (no mixing realistic and cartoon elements)
+- Ensure all text/logos are crisp and readable if present
+- Skin tone and features must remain consistent with character reference`);
+
+  return parts.join('\n\n');
+}
+
+/**
  * Generate image using Google's Nano Banana (Gemini Image Model)
  * @param {object} options - Generation options
  * @param {string} options.prompt - The image prompt
@@ -658,20 +766,48 @@ For EACH scenario, provide this DETAILED structure:
       
       "negative_prompt": ["no extra characters", "no blurry text", "etc"],
       
-      "prompt": "COMPLETE Sora-ready prompt combining ALL details above into one coherent paragraph. Include: character description, action, dialogue marker, camera work, lighting, style, and negative constraints. This should be COPY-PASTE ready for Sora."
+      "prompt": "COMPLETE Sora-ready prompt combining ALL details above using STEP-BY-STEP structure. This should be COPY-PASTE ready for Sora/Nano Banana."
     }
   ]
 }
 
-CRITICAL RULES:
-1. The "prompt" field must be EXTREMELY detailed and ready to paste into Sora
-2. For Ms. Goblina: ALWAYS include green skin, 3D Pixar style, gold bangles
-3. Dialogue must be SHORT and PUNCHY - Gen Z style
-4. If second character present and shouldn't speak, include "Character X is silent, only reacts" in prompt
-5. Include specific camera movements that match the emotional beat
-6. Office scenes: fluorescent lighting, desk, laptop
-7. Bedroom scenes: warm lighting, cozy elements
-8. Bathroom scenes: harsh lighting, mirror reflection`;
+CRITICAL RULES FOR HIGH-FIDELITY CHARACTER PRESERVATION:
+1. The "prompt" field must use STEP-BY-STEP structure for best results:
+   - Step 1: Describe the background/setting first
+   - Step 2: Describe the character in FULL DETAIL (preserve exact appearance)
+   - Step 3: Describe the action/expression
+   - Step 4: Specify camera work and composition
+
+2. CHARACTER DESCRIPTION (include EVERY time for consistency):
+   - "A green-skinned goblin woman with vibrant emerald-green skin"
+   - "Petite feminine build with stylized Pixar/DreamWorks 3D animation proportions"  
+   - "Large expressive eyes, small pointed nose, wide expressive mouth, pointed ears"
+   - "Wearing [specific clothing] with gold hoop earrings and gold bangles on wrists"
+   - "3D animated character with smooth surfaces and soft lighting"
+
+3. USE SEMANTIC NEGATIVE PROMPTS (positive descriptions instead of "no X"):
+   - Instead of "no other people" say "character is alone in the scene"
+   - Instead of "no blurry" say "crisp, clear, high-quality render"
+   - Instead of "no realistic style" say "consistent 3D animated cartoon style"
+
+4. CAMERA LANGUAGE (use cinematic terms):
+   - "Medium shot at eye-level, subject centered"
+   - "Close-up with shallow depth of field"
+   - "Push-in camera movement matching emotional beat"
+   - "Portrait orientation (9:16) optimized for mobile viewing"
+
+5. CONTEXT AND INTENT:
+   - Always mention "for Instagram Reels/TikTok social media content"
+   - Include the mood/emotion the scene should evoke
+
+6. SCENE-SPECIFIC LIGHTING:
+   - Office: "Harsh fluorescent overhead lighting casting slight shadows"
+   - Bedroom: "Warm ambient lighting from bedside lamp, cozy atmosphere"
+   - Bathroom: "Bright harsh bathroom lighting, mirror reflections"
+   - Outdoor: "Natural daylight with soft shadows"
+
+7. Dialogue must be SHORT and PUNCHY - Gen Z style
+8. If second character present and shouldn't speak, include "Character X is visible but silent, only showing reactions"`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4.1',
@@ -686,13 +822,23 @@ CRITICAL RULES:
 
 Generate ${sceneCount} detailed scenario(s) that are relatable, funny, and perfect for Instagram Reels.
 
-Remember: The "prompt" field should be a COMPLETE, DETAILED paragraph ready to paste into Sora with:
-- Full character description (green-skinned goblin, specific clothing, accessories)
-- Specific action and dialogue
-- Camera movement and shot type  
-- Lighting and atmosphere
-- Visual style (3D cartoon, Pixar-like)
-- Any constraints (e.g., "second character does not speak")
+PROMPT STRUCTURE (follow this exact format for the "prompt" field):
+
+STEP 1 - BACKGROUND: "In a [detailed setting description with specific lighting]..."
+
+STEP 2 - CHARACTER (FULL DETAIL FOR PRESERVATION): "A green-skinned goblin woman with vibrant emerald-green skin, petite feminine build in 3D Pixar-style animation. She has large expressive eyes, small pointed nose, wide expressive mouth, and pointed ears. She wears [specific clothing], gold hoop earrings, and gold bangles on her wrists..."
+
+STEP 3 - ACTION & EXPRESSION: "She is [specific action] with [specific expression - e.g., 'eyes widening dramatically, eyebrows raised, jaw dropping slightly']..."
+
+STEP 4 - CAMERA & COMPOSITION: "Shot as a [shot type] at [angle], [camera movement], portrait orientation (9:16) for mobile viewing. [Lighting description]. 3D animated style with smooth surfaces."
+
+STEP 5 - CONTEXT: "Created for Instagram Reels/TikTok social media content, evoking [emotion/mood]."
+
+REMEMBER:
+- Be HYPER-SPECIFIC about character appearance (preserve every detail)
+- Use SEMANTIC NEGATIVE PROMPTS (describe what IS there, not what isn't)
+- Include CAMERA LANGUAGE (shot type, angle, movement)
+- State CONTEXT AND INTENT (social media content, target emotion)
 
 This is for a Gen Z audience so make it relatable and punchy!
 
@@ -745,16 +891,35 @@ app.post('/api/images/generate', async (req, res) => {
       resolution = '2K',
       referenceImages = [],
       model = 'gemini-2.5-flash-image',
-      saveToCloudinary: shouldSave = true
+      saveToCloudinary: shouldSave = true,
+      // NEW: Character and scene context for high-fidelity preservation
+      characterStyleGuide = null,
+      characterName = 'Ms. Goblina',
+      scene = {},
+      enhancePrompt = true // Auto-enhance prompts with best practices
     } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
+    // Build enhanced prompt with character details and best practices
+    let finalPrompt = prompt;
+    
+    if (enhancePrompt) {
+      const characterDescription = buildDetailedCharacterDescription(characterStyleGuide, characterName);
+      finalPrompt = enhancePromptForNanoBanana(prompt, {
+        characterDescription,
+        scene,
+        aspectRatio,
+        intent: 'Instagram Reels / TikTok social media content'
+      });
+      console.log('🍌 Enhanced prompt with character preservation and best practices');
+    }
+
     // Generate the image
     const result = await generateNanoBananaImage({
-      prompt,
+      prompt: finalPrompt,
       aspectRatio,
       resolution,
       referenceImages,
@@ -813,6 +978,9 @@ app.post('/api/images/generate', async (req, res) => {
  *   }>,
  *   referenceImages: string[] - Shared reference images for all scenes
  *   model: string
+ *   characterStyleGuide: object - Character style guide for high-fidelity preservation
+ *   characterName: string - Character name
+ *   enhancePrompt: boolean - Whether to auto-enhance prompts
  * }
  */
 app.post('/api/images/generate-batch', async (req, res) => {
@@ -829,14 +997,26 @@ app.post('/api/images/generate-batch', async (req, res) => {
       referenceImages = [],
       model = 'gemini-2.5-flash-image',
       aspectRatio = '9:16',
-      resolution = '2K'
+      resolution = '2K',
+      // Character context for consistency
+      characterStyleGuide = null,
+      characterName = 'Ms. Goblina',
+      enhancePrompt = true
     } = req.body;
 
     if (!scenes.length) {
       return res.status(400).json({ error: 'At least one scene is required' });
     }
 
+    // Pre-build character description once for all scenes
+    const characterDescription = enhancePrompt 
+      ? buildDetailedCharacterDescription(characterStyleGuide, characterName)
+      : '';
+
     console.log(`🍌 Generating ${scenes.length} scene images...`);
+    if (enhancePrompt) {
+      console.log('🍌 Using enhanced prompts with character preservation');
+    }
 
     const results = [];
     
@@ -844,9 +1024,20 @@ app.post('/api/images/generate-batch', async (req, res) => {
       const scene = scenes[i];
       console.log(`🍌 Generating scene ${i + 1}/${scenes.length}...`);
       
+      // Enhance prompt with character details and best practices
+      let finalPrompt = scene.prompt;
+      if (enhancePrompt) {
+        finalPrompt = enhancePromptForNanoBanana(scene.prompt, {
+          characterDescription,
+          scene,
+          aspectRatio: scene.aspectRatio || aspectRatio,
+          intent: 'Instagram Reels / TikTok social media content'
+        });
+      }
+      
       try {
         const result = await generateNanoBananaImage({
-          prompt: scene.prompt,
+          prompt: finalPrompt,
           aspectRatio: scene.aspectRatio || aspectRatio,
           resolution: scene.resolution || resolution,
           referenceImages,

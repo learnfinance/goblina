@@ -2247,7 +2247,12 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
                 resolution,
                 referenceImages,
                 model,
-                saveToCloudinary: true
+                saveToCloudinary: true,
+                // Pass character info for high-fidelity preservation
+                characterStyleGuide: characterProfile?.styleGuide || null,
+                characterName: characterProfile?.name || document.getElementById('character-name')?.value || 'Ms. Goblina',
+                scene: scene, // Pass full scene for context
+                enhancePrompt: true // Enable best-practice enhancements
               })
             });
 
@@ -2345,7 +2350,12 @@ AUDIO/VOICE REQUIREMENTS (CRITICAL - Keep consistent across ALL generations):
               resolution,
               referenceImages,
               model,
-              saveToCloudinary: true
+              saveToCloudinary: true,
+              // Pass character info for high-fidelity preservation
+              characterStyleGuide: characterProfile?.styleGuide || null,
+              characterName: characterProfile?.name || document.getElementById('character-name')?.value || 'Ms. Goblina',
+              scene: scene, // Pass full scene for context
+              enhancePrompt: true // Enable best-practice enhancements
             })
           });
 
