@@ -697,7 +697,7 @@
 
           const result = await res.json();
 
-          // Save to database
+          // Save to database (use the Cloudinary URL from analysis response)
           const saveRes = await fetch('/api/characters/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -705,7 +705,7 @@
               id: result.id,
               name: result.name,
               styleGuide: result.styleGuide,
-              imageUrl: null // Could upload to cloud storage
+              imageUrl: result.imageUrl // Cloudinary URL from character analysis
             })
           });
 

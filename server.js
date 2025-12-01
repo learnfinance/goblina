@@ -171,42 +171,68 @@ const NANO_BANANA_RESOLUTIONS = ['1K', '2K', '4K'];
  * 
  * @param {object} styleGuide - The character's style guide from analysis
  * @param {string} characterName - The character's name
+ * @param {boolean} hasReferenceImage - Whether a reference image is being provided
  * @returns {string} - Detailed character description block
  */
-function buildDetailedCharacterDescription(styleGuide, characterName = 'Ms. Goblina') {
+function buildDetailedCharacterDescription(styleGuide, characterName = 'Ms. Goblina', hasReferenceImage = false) {
+  // Strong reference image instruction if provided
+  const referenceInstruction = hasReferenceImage ? `
+**REFERENCE IMAGE PROVIDED - CRITICAL:**
+A reference image of this character is attached. You MUST:
+1. Match the EXACT skin tone and color from the reference
+2. Preserve the EXACT facial structure and features
+3. Keep the SAME art style and rendering quality
+4. Maintain all signature accessories (earrings, bangles)
+5. The generated image should look like it's from the SAME animation/series
+` : '';
+
   if (!styleGuide) {
     // Default Ms. Goblina description for consistent character preservation
-    return `
+    return `${referenceInstruction}
 CHARACTER DESCRIPTION (preserve these exact details):
 Name: ${characterName}
-Species: Animated goblin woman
-Skin: Vibrant green skin with subtle texture, consistent saturation throughout
-Face: Expressive large eyes with dark pupils, small pointed nose, wide mouth capable of exaggerated expressions, pointed ears
-Build: Petite, feminine figure with stylized proportions
-Hair: Dark hair, usually styled casually or messy
-Signature Features: Gold hoop earrings, multiple gold bangles on wrists, casual modern clothing
-Art Style: 3D Pixar-like animated character, smooth surfaces, soft lighting, cartoon proportions
-Expression Style: Highly expressive, emotive, capable of exaggerated reactions`;
+Species: Animated goblin woman with GREEN SKIN (this is mandatory - she is a goblin)
+Skin: Vibrant emerald/lime green skin tone - NOT human skin color, she is a green goblin
+Face: Expressive large eyes with dark pupils, small pointed goblin nose, wide mouth capable of exaggerated expressions, pointed goblin ears
+Build: Petite, feminine figure with stylized cartoon proportions
+Hair: Dark hair (black or very dark brown), usually styled casually or in a messy bun
+Signature Features: Gold hoop earrings, multiple gold bangles and bracelets on wrists, casual modern clothing (hoodies, tank tops)
+Art Style: 3D Pixar/DreamWorks-quality animated character, smooth rendered surfaces, soft cinematic lighting, cartoon proportions
+Expression Style: Highly expressive, emotive, capable of exaggerated comedic reactions
+
+MANDATORY CHARACTER TRAITS:
+- GREEN SKIN (goblin character - this cannot be changed)
+- Gold jewelry (earrings + wrist bangles)  
+- 3D cartoon animation style (NOT realistic, NOT 2D)
+- Young adult female goblin`;
   }
 
   const char = styleGuide.character || {};
   const acc = styleGuide.accessories || {};
+  const colorPalette = char.colorPalette || [];
   
-  return `
+  // Try to extract skin color from palette (usually first green)
+  const skinColor = colorPalette.find(c => c?.toLowerCase().includes('green') || c?.toLowerCase().includes('8bc') || c?.toLowerCase().includes('4caf')) || '#8BC34A';
+  
+  return `${referenceInstruction}
 CHARACTER DESCRIPTION (preserve these exact details):
 Name: ${characterName}
 Physical Appearance: ${char.appearance || 'Green-skinned goblin woman, petite feminine build'}
-Skin: ${char.body?.skin_tone || 'Vibrant green skin with consistent saturation'}
-Face: ${char.face?.description || 'Expressive large eyes, small pointed nose, wide mouth, pointed ears'}
-Hair: ${char.hair?.color || 'Dark'} hair, ${char.hair?.style || 'casual style'}
-Build: ${char.body?.build || 'Petite, feminine figure with stylized proportions'}
-Signature Jewelry: ${acc.jewelry?.earrings || 'Gold hoop earrings'}, ${acc.jewelry?.wrist || 'gold bangles on wrists'}
-Clothing Style: ${char.details || 'Casual modern clothing - hoodies, tank tops, comfortable wear'}
-Art Style: ${char.visualStyle || '3D Pixar-like animated character, smooth surfaces, soft lighting'}
-Color Palette: ${char.colorPalette?.join(', ') || '#8BC34A (green skin), #FFD700 (gold accents), warm earth tones'}
-Expression Style: Highly expressive, emotive, capable of exaggerated reactions
+Skin: ${char.body?.skin_tone || `GREEN SKIN - specific hex: ${skinColor} - this is a goblin character`}
+Face: ${char.face?.description || 'Expressive large eyes, small pointed goblin nose, wide expressive mouth, pointed goblin ears'}
+Hair: ${char.hair?.color || 'Dark'} hair, ${char.hair?.style || 'casual/messy style'}
+Build: ${char.body?.build || 'Petite, feminine figure with stylized cartoon proportions'}
+Signature Jewelry: ${acc.jewelry?.earrings || 'Gold hoop earrings'}, ${acc.jewelry?.wrist || 'gold bangles and bracelets on wrists'}
+Clothing Style: ${char.details || 'Casual modern Gen-Z clothing - hoodies, tank tops, comfortable athleisure'}
+Art Style: ${char.visualStyle || '3D Pixar/DreamWorks-quality animated character, smooth surfaces, soft lighting'}
+Color Palette: ${colorPalette.join(', ') || '#8BC34A (green skin), #FFD700 (gold accents), warm earth tones'}
+Expression Style: Highly expressive, emotive, exaggerated cartoon reactions
 
-CRITICAL: Maintain exact skin tone, facial features, jewelry, and art style across all generations.`;
+MANDATORY - DO NOT CHANGE:
+- GREEN SKIN TONE (she is a goblin, not a human)
+- Gold jewelry accessories
+- 3D animated cartoon style (Pixar/DreamWorks quality)
+- Consistent facial features across all images`;
 }
 
 /**
@@ -226,7 +252,8 @@ function enhancePromptForNanoBanana(basePrompt, options = {}) {
     characterDescription = '',
     scene = {},
     aspectRatio = '9:16',
-    intent = 'social media content'
+    intent = 'social media content',
+    hasReferenceImage = false
   } = options;
 
   // Determine camera language based on aspect ratio
@@ -239,8 +266,22 @@ function enhancePromptForNanoBanana(basePrompt, options = {}) {
   // Build step-by-step structured prompt
   const parts = [];
 
+  // PRIORITY 1: Reference Image Instruction (if provided)
+  if (hasReferenceImage) {
+    parts.push(`**CRITICAL - REFERENCE IMAGE ATTACHED**
+You have been given a reference image of the character. 
+You MUST generate an image where:
+1. The character looks IDENTICAL to the reference - same face, same skin color, same style
+2. The character's GREEN SKIN TONE must match exactly
+3. All accessories (gold earrings, bangles) must be present
+4. The art style/rendering must be consistent with the reference
+5. This should look like a NEW SCENE from the SAME animation/cartoon series`);
+  }
+
   // Step 1: Context and Intent
-  parts.push(`CONTEXT: Creating ${intent} featuring an animated character. Style should be consistent with modern 3D animation (Pixar/DreamWorks quality).`);
+  parts.push(`CONTEXT: Creating ${intent} featuring an animated GOBLIN character with GREEN SKIN. 
+Style: Modern 3D animation (Pixar/DreamWorks quality).
+Character Type: Cartoon goblin woman - NOT a human, has GREEN SKIN.`);
 
   // Step 2: Character (HIGH PRIORITY - preserve details)
   if (characterDescription) {
@@ -248,7 +289,12 @@ function enhancePromptForNanoBanana(basePrompt, options = {}) {
   }
 
   // Step 3: Scene Description
-  parts.push(`SCENE: ${basePrompt}`);
+  parts.push(`SCENE ACTION: ${basePrompt}
+
+IMPORTANT: The character in this scene is the SAME character from the reference image.
+- Keep her GREEN SKIN
+- Keep her gold jewelry (hoop earrings, bangles)
+- Keep the 3D cartoon art style`);
 
   // Step 4: Camera and Composition
   const cameraDetails = scene.photography || {};
@@ -258,17 +304,24 @@ CAMERA & COMPOSITION:
 - Shot Type: ${cameraDetails.shot_type || 'medium shot focusing on character'}
 - Angle: ${cameraDetails.angle || 'eye-level, engaging perspective'}
 - Lighting: ${scene.background?.lighting || 'soft, flattering lighting that highlights the character'}
-- Depth: Clear foreground focus with slightly blurred background for depth`);
+- Depth: Clear foreground focus with slightly blurred background for depth
+- Focus: Character is the hero of the shot`);
 
   // Step 5: Quality Directives (positive semantic descriptions instead of negative prompts)
   parts.push(`
 QUALITY DIRECTIVES:
 - Render with clean, professional quality suitable for social media
-- Character should be the clear focal point of the image
+- Character should be the clear focal point with GREEN GOBLIN SKIN
 - Background should complement but not distract from the character
-- Maintain consistent art style throughout (no mixing realistic and cartoon elements)
-- Ensure all text/logos are crisp and readable if present
-- Skin tone and features must remain consistent with character reference`);
+- CONSISTENT ART STYLE: 3D animated cartoon only (no realistic mixing)
+- Character's skin MUST be green (she is a goblin, not human)
+- All signature accessories must be visible (gold earrings, bangles)
+
+DO NOT:
+- Change the skin color to human/realistic tones
+- Mix 2D and 3D styles
+- Omit the character's signature jewelry
+- Change the character's facial structure`);
 
   return parts.join('\n\n');
 }
@@ -656,6 +709,123 @@ const PERSONALITY_PRESETS = {
     shotPreference: 'varied',
     contentType: 'meme',
     description: 'Life chaos and struggles, comedic take'
+  },
+  // NEW: Based on example conversations for Ms. Goblina content
+  'hot-mess-breakdown': {
+    tone: 'self-deprecating-funny',
+    pacing: 'dramatic-pause',
+    emotion: 'chaotic-vulnerable',
+    vibe: 'messy-but-charming',
+    cameraStyle: 'intimate-close',
+    shotPreference: 'close-up',
+    contentType: 'meme',
+    description: 'Crying in the bathroom but loving the skin glow - embracing the beautiful mess',
+    exampleScenarios: [
+      'Having a breakdown but noticing her skin looks amazing from the tears',
+      'Ugly crying at work but checking herself out in the mirror',
+      'Mental health day that turns into noticing positive side effects'
+    ]
+  },
+  'corporate-slack-chaos': {
+    tone: 'deadpan-sarcastic',
+    pacing: 'build-to-reaction',
+    emotion: 'internal-screaming',
+    vibe: 'quiet-rage',
+    cameraStyle: 'POV-then-reaction',
+    shotPreference: 'screen-to-face',
+    contentType: 'meme',
+    description: 'Corporate Slack messages and email chaos - "quick question" energy',
+    exampleScenarios: [
+      'Receiving a "quick question" Slack at 5pm Friday',
+      'Manager sending "can we chat?" with no context',
+      'Meeting that could have been an email',
+      'Being CC\'d on an email chain that has nothing to do with you'
+    ],
+    signatureLines: [
+      'Corporate Slack messages that start with "quick question" should be illegal.',
+      'Micromanager? Meet my macro boundaries.',
+      'Per my last email... that you clearly didn\'t read.'
+    ]
+  },
+  'billionaire-daydream': {
+    tone: 'dreamy-comedic',
+    pacing: 'montage-style',
+    emotion: 'aspirational-delusional',
+    vibe: 'main-character-energy',
+    cameraStyle: 'glamour-shots',
+    shotPreference: 'varied-fantasy',
+    contentType: 'montage',
+    description: 'Daydreaming about being rich while at a boring job - Bruno Mars "Billionaire" energy',
+    exampleScenarios: [
+      'Spacing out at work desk imagining yacht life',
+      'Every scenario of what you\'d do as a billionaire',
+      '25-year-old in cubicle manifesting millions'
+    ]
+  },
+  'couples-food-drama': {
+    tone: 'playful-argumentative',
+    pacing: 'back-and-forth',
+    emotion: 'hangry-but-loving',
+    vibe: 'relatable-couples',
+    cameraStyle: 'two-shot',
+    shotPreference: 'medium-two-shot',
+    contentType: 'dialogue',
+    description: 'Food-related relationship arguments where both sides are valid',
+    exampleScenarios: [
+      'She wants fried chicken, he wants healthy poke bowl',
+      'Deciding where to eat for the 100th time',
+      'One craving comfort food, other on a health kick'
+    ]
+  },
+  'pause-the-scroll': {
+    tone: 'real-talk',
+    pacing: 'moment-of-clarity',
+    emotion: 'vulnerable-confrontational',
+    vibe: 'relationship-therapy',
+    cameraStyle: 'intimate',
+    shotPreference: 'close-two-shot',
+    contentType: 'dialogue',
+    description: 'Real relationship conversations - "pause the scroll, solve us" energy',
+    exampleScenarios: [
+      'Calling out phone addiction in relationship',
+      'Needing presence vs. needing decompress time',
+      'Setting boundaries as a couple'
+    ],
+    signatureLines: [
+      'Pause the scroll, solve us.',
+      'When your screen wins, I feel like I don\'t.',
+      'Phones down. Us up.'
+    ]
+  },
+  'intern-energy': {
+    tone: 'naive-optimistic',
+    pacing: 'fast-confused',
+    emotion: 'overwhelmed-eager',
+    vibe: 'first-day-vibes',
+    cameraStyle: 'shaky-POV',
+    shotPreference: 'medium',
+    contentType: 'meme',
+    description: 'New job/intern struggles - learning the ropes and corporate culture',
+    exampleScenarios: [
+      'Not knowing what any of the acronyms mean',
+      'First week trying to figure out office politics',
+      'Pretending to understand in meetings'
+    ]
+  },
+  'study-procrastination': {
+    tone: 'guilty-relatable',
+    pacing: 'time-lapse-chaos',
+    emotion: 'stressed-avoidant',
+    vibe: 'academic-spiral',
+    cameraStyle: 'documentary',
+    shotPreference: 'medium-wide',
+    contentType: 'meme',
+    description: 'Student/study procrastination struggles',
+    exampleScenarios: [
+      'Opening laptop to study, ending up on social media',
+      'Exam tomorrow, cleaning the entire room instead',
+      'The 3am study session delusion'
+    ]
   }
 };
 
@@ -905,16 +1075,21 @@ app.post('/api/images/generate', async (req, res) => {
 
     // Build enhanced prompt with character details and best practices
     let finalPrompt = prompt;
+    const hasReferenceImages = referenceImages.length > 0;
     
     if (enhancePrompt) {
-      const characterDescription = buildDetailedCharacterDescription(characterStyleGuide, characterName);
+      const characterDescription = buildDetailedCharacterDescription(characterStyleGuide, characterName, hasReferenceImages);
       finalPrompt = enhancePromptForNanoBanana(prompt, {
         characterDescription,
         scene,
         aspectRatio,
-        intent: 'Instagram Reels / TikTok social media content'
+        intent: 'Instagram Reels / TikTok social media content',
+        hasReferenceImage: hasReferenceImages
       });
       console.log('🍌 Enhanced prompt with character preservation and best practices');
+      if (hasReferenceImages) {
+        console.log('🍌 Reference image(s) attached for character consistency');
+      }
     }
 
     // Generate the image
@@ -1009,13 +1184,17 @@ app.post('/api/images/generate-batch', async (req, res) => {
     }
 
     // Pre-build character description once for all scenes
+    const hasReferenceImages = referenceImages.length > 0;
     const characterDescription = enhancePrompt 
-      ? buildDetailedCharacterDescription(characterStyleGuide, characterName)
+      ? buildDetailedCharacterDescription(characterStyleGuide, characterName, hasReferenceImages)
       : '';
 
     console.log(`🍌 Generating ${scenes.length} scene images...`);
     if (enhancePrompt) {
       console.log('🍌 Using enhanced prompts with character preservation');
+    }
+    if (hasReferenceImages) {
+      console.log('🍌 Reference image(s) attached for character consistency');
     }
 
     const results = [];
@@ -1031,7 +1210,8 @@ app.post('/api/images/generate-batch', async (req, res) => {
           characterDescription,
           scene,
           aspectRatio: scene.aspectRatio || aspectRatio,
-          intent: 'Instagram Reels / TikTok social media content'
+          intent: 'Instagram Reels / TikTok social media content',
+          hasReferenceImage: hasReferenceImages
         });
       }
       
