@@ -84,7 +84,7 @@ app.post('/api/characters/analyze', upload.single('image'), async (req, res) => 
 
     // Call Vision API to analyze character
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
       messages: [
         {
           role: 'user',
@@ -315,7 +315,7 @@ CRITICAL RULES:
 8. Bathroom scenes: harsh lighting, mirror reflection`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
       messages: [
         {
           role: 'system',
@@ -572,7 +572,7 @@ IMPORTANT RULES:
 8. The sora_prompt_text should be a COMPLETE, ready-to-use prompt`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
       messages: [
         {
           role: 'system',
@@ -704,7 +704,7 @@ Return JSON:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1',
       messages: [
         {
           role: 'system',

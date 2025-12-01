@@ -511,6 +511,20 @@
         font-size: 1.1rem;
       ">🎬 Sora Creator</a>
       <div style="display: flex; gap: 16px; flex: 1;">
+        <a href="/characters.html" style="
+          color: var(--text-muted);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s;
+        ">👤 My Characters</a>
+        <a href="/history.html" style="
+          color: var(--text-muted);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s;
+        ">📜 History</a>
         <a href="/creator.html" style="
           color: var(--accent);
           text-decoration: none;
@@ -526,9 +540,8 @@
           padding: 6px 12px;
           border-radius: 8px;
           transition: all 0.2s;
-        " onmouseover="this.style.background='rgba(91,141,255,0.1)'; this.style.color='var(--accent)'" 
-           onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">
-          ⚡ Simple Generator
+        ">
+          ⚡ Quick Generate
         </a>
       </div>
     </nav>
@@ -570,10 +583,34 @@
 
       <!-- Step 1: Character Setup -->
       <div class="panel" id="step-1">
-        <h2>✨ Upload Character Image</h2>
+        <h2>✨ Select or Upload Character</h2>
         <p style="color: var(--text-muted); margin-bottom: 16px;">
-          Upload an image of Ms. Goblina. AI will analyze the style and create a guide for consistent video generation.
+          Choose a saved character or upload a new one. AI will analyze the style for consistent video generation.
         </p>
+
+        <!-- Saved Characters Selector -->
+        <div id="saved-characters-section" style="margin-bottom: 20px;">
+          <label>Use Saved Character</label>
+          <select id="saved-character-select" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main); font-size: 0.9rem; margin-bottom: 10px;">
+            <option value="">-- Upload New Character --</option>
+          </select>
+          <div id="saved-character-preview" class="hidden" style="padding: 12px; border-radius: 10px; background: rgba(52, 211, 153, 0.1); border: 1px solid var(--accent-green); margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 2rem;">👤</span>
+              <div>
+                <div id="selected-char-name" style="font-weight: 600;"></div>
+                <div id="selected-char-style" style="font-size: 0.8rem; color: var(--text-muted);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="upload-new-character-section">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+            <span style="color: var(--text-muted); font-size: 0.8rem;">OR UPLOAD NEW</span>
+            <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+          </div>
 
         <form id="character-form">
           <label for="character-name">Character Name</label>
@@ -600,16 +637,60 @@
           <h3 style="margin-bottom: 12px;">📋 Style Guide</h3>
           <pre id="style-guide-json" style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 0.75rem;"></pre>
         </div>
+        </div><!-- close upload-new-character-section -->
       </div>
 
-      <!-- Step 2: Personality Preset -->
+      <!-- Step 2: Personality & Video Settings -->
       <div class="panel hidden" id="step-2">
-        <h2>🎭 Choose Content Personality</h2>
+        <h2>🎭 Content Settings</h2>
         <p style="color: var(--text-muted); margin-bottom: 16px;">
-          Select the vibe and tone for your content. This affects camera work, pacing, and overall feel.
+          Configure personality, video format, and generation options.
         </p>
 
+        <!-- Personality Presets -->
+        <label style="margin-bottom: 8px; display: block;">Content Personality</label>
         <div class="preset-grid" id="personality-presets"></div>
+
+        <!-- Video Settings -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+          <h3 style="margin: 0 0 16px; font-size: 1rem;">⚙️ Video Settings</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+            <!-- Duration -->
+            <div>
+              <label for="video-duration">Duration (seconds)</label>
+              <select id="video-duration" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main);">
+                <option value="5">5 seconds</option>
+                <option value="8" selected>8 seconds</option>
+                <option value="10">10 seconds</option>
+                <option value="15">15 seconds</option>
+                <option value="20">20 seconds</option>
+              </select>
+            </div>
+
+            <!-- Aspect Ratio -->
+            <div>
+              <label for="video-aspect">Aspect Ratio</label>
+              <select id="video-aspect" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main);">
+                <option value="720x1280" selected>9:16 Portrait (Reels)</option>
+                <option value="1280x720">16:9 Landscape</option>
+                <option value="1080x1080">1:1 Square</option>
+                <option value="1024x1792">9:16 Tall Portrait</option>
+              </select>
+            </div>
+
+            <!-- Scene Count -->
+            <div>
+              <label for="scene-count">Variations to Generate</label>
+              <select id="scene-count" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(10, 12, 22, 0.9); color: var(--text-main);">
+                <option value="1" selected>1 variation</option>
+                <option value="2">2 variations</option>
+                <option value="3">3 variations</option>
+                <option value="5">5 variations</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
         <div class="btn-group">
           <button class="btn btn-secondary" id="back-to-step-1">← Back</button>
@@ -713,9 +794,17 @@
       // State
       let characterProfile = null;
       let characterImageFile = null; // Store the character image for reuse
+      let savedCharacters = []; // Loaded from database
       let selectedPersonality = 'genz-meme';
       let scenarios = [];
       let currentStep = 1;
+
+      // Video Settings (from Step 2)
+      let videoSettings = {
+        duration: 8,
+        aspectRatio: '720x1280',
+        sceneCount: 1
+      };
 
       // Elements
       const wizardSteps = document.querySelectorAll('.wizard-step');
@@ -727,6 +816,81 @@
         document.getElementById('step-4'),
         document.getElementById('step-5')
       ];
+
+      // ==========================================
+      // INITIALIZE - Load saved characters
+      // ==========================================
+      document.addEventListener('DOMContentLoaded', async () => {
+        await loadSavedCharacters();
+        
+        // Check if coming from Characters page with a selected character
+        const selectedCharId = localStorage.getItem('selectedCharacterId');
+        if (selectedCharId) {
+          const charSelect = document.getElementById('saved-character-select');
+          charSelect.value = selectedCharId;
+          handleSavedCharacterSelect();
+          localStorage.removeItem('selectedCharacterId');
+        }
+      });
+
+      async function loadSavedCharacters() {
+        try {
+          const res = await fetch('/api/characters');
+          savedCharacters = await res.json();
+          
+          const select = document.getElementById('saved-character-select');
+          select.innerHTML = '<option value="">-- Upload New Character --</option>';
+          
+          savedCharacters.forEach(char => {
+            const option = document.createElement('option');
+            option.value = char.id;
+            option.textContent = char.name;
+            select.appendChild(option);
+          });
+        } catch (err) {
+          console.error('Failed to load saved characters:', err);
+        }
+      }
+
+      // Handle saved character selection
+      document.getElementById('saved-character-select').addEventListener('change', handleSavedCharacterSelect);
+
+      function handleSavedCharacterSelect() {
+        const select = document.getElementById('saved-character-select');
+        const charId = select.value;
+        const preview = document.getElementById('saved-character-preview');
+        const uploadSection = document.getElementById('upload-new-character-section');
+
+        if (charId) {
+          const char = savedCharacters.find(c => c.id === charId);
+          if (char) {
+            const styleGuide = typeof char.style_guide === 'string' 
+              ? JSON.parse(char.style_guide) 
+              : char.style_guide;
+
+            // Set character profile
+            characterProfile = {
+              id: char.id,
+              name: char.name,
+              styleGuide: styleGuide
+            };
+
+            // Show preview
+            document.getElementById('selected-char-name').textContent = char.name;
+            document.getElementById('selected-char-style').textContent = 
+              styleGuide?.character?.visualStyle || 'Style analyzed';
+            preview.classList.remove('hidden');
+            
+            // Hide upload section
+            uploadSection.style.display = 'none';
+          }
+        } else {
+          // Show upload section, hide preview
+          preview.classList.add('hidden');
+          uploadSection.style.display = 'block';
+          characterProfile = null;
+        }
+      }
 
       // Wizard Navigation
       function goToStep(step) {
@@ -743,6 +907,13 @@
             panel.classList.toggle('hidden', idx !== step);
           }
         });
+
+        // Update video settings when leaving Step 2
+        if (step > 2) {
+          videoSettings.duration = parseInt(document.getElementById('video-duration').value);
+          videoSettings.aspectRatio = document.getElementById('video-aspect').value;
+          videoSettings.sceneCount = parseInt(document.getElementById('scene-count').value);
+        }
       }
 
       // Step 1: Character Upload & Analysis
@@ -802,6 +973,25 @@
           characterProfile = await res.json();
           styleGuideJson.textContent = JSON.stringify(characterProfile.styleGuide, null, 2);
           styleGuidePreview.classList.remove('hidden');
+
+          // AUTO-SAVE character to database
+          try {
+            await fetch('/api/characters/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: characterProfile.id,
+                name: characterProfile.name,
+                styleGuide: characterProfile.styleGuide,
+                imageUrl: null
+              })
+            });
+            console.log('✅ Character auto-saved to database');
+            // Refresh the saved characters dropdown
+            await loadSavedCharacters();
+          } catch (saveErr) {
+            console.warn('Could not auto-save character:', saveErr);
+          }
 
           // Auto-advance after 2 seconds
           setTimeout(() => {
@@ -890,7 +1080,7 @@
               topic,
               characterStyleGuide: characterProfile.styleGuide,
               personalityPreset: selectedPersonality,
-              sceneCount: 1
+              sceneCount: videoSettings.sceneCount
             })
           });
 
@@ -1118,12 +1308,12 @@
             progressText.textContent = 'Sending to Sora API...';
             videoContainer.innerHTML = '<div>🎬 Generating with Sora 2...</div>';
 
-            // Create form data
+            // Create form data with video settings
             const formData = new FormData();
             formData.append('image', characterImageFile);
             formData.append('prompt', scene.prompt || scene.sceneDescription);
-            formData.append('seconds', scene.duration || 8);
-            formData.append('size', '720x1280');
+            formData.append('seconds', videoSettings.duration);
+            formData.append('size', videoSettings.aspectRatio);
 
             // Start generation
             const generateRes = await fetch('/api/generate', {
