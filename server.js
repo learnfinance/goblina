@@ -168,6 +168,7 @@ const NANO_BANANA_RESOLUTIONS = ['1K', '2K', '4K'];
 /**
  * Build a detailed character description for high-fidelity preservation
  * This ensures the character's appearance is consistently described in every prompt
+ * Uses the ACTUAL style from the character's styleGuide analysis
  * 
  * @param {object} styleGuide - The character's style guide from analysis
  * @param {string} characterName - The character's name
@@ -179,60 +180,58 @@ function buildDetailedCharacterDescription(styleGuide, characterName = 'Ms. Gobl
   const referenceInstruction = hasReferenceImage ? `
 **REFERENCE IMAGE PROVIDED - CRITICAL:**
 A reference image of this character is attached. You MUST:
-1. Match the EXACT skin tone and color from the reference
-2. Preserve the EXACT facial structure and features
-3. Keep the SAME art style and rendering quality
-4. Maintain all signature accessories (earrings, bangles)
-5. The generated image should look like it's from the SAME animation/series
+1. Match the EXACT art style from the reference (2D digital cartoon, NOT 3D)
+2. Match the EXACT skin tone and color (vibrant green, hex ~#69a86c)
+3. Preserve the EXACT facial structure, proportions, and features
+4. Keep the SAME line work, shading, and rendering style
+5. Maintain all signature accessories (large dangling earrings, gold bangles)
+6. The generated image MUST look like it's from the SAME series/artist
+7. DO NOT make it 3D or Pixar-style - it is 2D DIGITAL CARTOON
 ` : '';
 
-  if (!styleGuide) {
-    // Default Ms. Goblina description for consistent character preservation
-    return `${referenceInstruction}
-CHARACTER DESCRIPTION (preserve these exact details):
-Name: ${characterName}
-Species: Animated goblin woman with GREEN SKIN (this is mandatory - she is a goblin)
-Skin: Vibrant emerald/lime green skin tone - NOT human skin color, she is a green goblin
-Face: Expressive large eyes with dark pupils, small pointed goblin nose, wide mouth capable of exaggerated expressions, pointed goblin ears
-Build: Petite, feminine figure with stylized cartoon proportions
-Hair: Dark hair (black or very dark brown), usually styled casually or in a messy bun
-Signature Features: Gold hoop earrings, multiple gold bangles and bracelets on wrists, casual modern clothing (hoodies, tank tops)
-Art Style: 3D Pixar/DreamWorks-quality animated character, smooth rendered surfaces, soft cinematic lighting, cartoon proportions
-Expression Style: Highly expressive, emotive, capable of exaggerated comedic reactions
-
-MANDATORY CHARACTER TRAITS:
-- GREEN SKIN (goblin character - this cannot be changed)
-- Gold jewelry (earrings + wrist bangles)  
-- 3D cartoon animation style (NOT realistic, NOT 2D)
-- Young adult female goblin`;
-  }
-
-  const char = styleGuide.character || {};
-  const acc = styleGuide.accessories || {};
-  const colorPalette = char.colorPalette || [];
+  // Extract character info from styleGuide if available
+  const char = styleGuide?.character || {};
+  const personality = styleGuide?.personality || {};
+  const colorPalette = char.colorPalette || ['#69a86c', '#a03137', '#8a4298', '#3c4f66'];
   
-  // Try to extract skin color from palette (usually first green)
-  const skinColor = colorPalette.find(c => c?.toLowerCase().includes('green') || c?.toLowerCase().includes('8bc') || c?.toLowerCase().includes('4caf')) || '#8BC34A';
-  
+  // Use the ACTUAL visual style from analysis, default to 2D digital cartoon
+  const visualStyle = char.visualStyle || '2D digital cartoon, semi-realistic proportions with stylized fantasy features';
+  const artisticStyle = char.artisticStyle || 'Clean lines, soft shading, subtle gradients, and gentle highlights';
+  const appearance = char.appearance || 'Green-skinned female with long red hair, black horns, and pointed ears, wearing a magenta hoodie with "Barlie Rules" text, dark blue jeans, and multiple gold bangles and large earrings';
+  const lighting = char.lighting || 'Warm, soft indoor lighting with subtle glows and gentle shadows';
+  const details = char.details || 'Textural details include ribbed hoodie fabric, jewel-like shine on bangles, visible hair strands, faint sparkles in background';
+
   return `${referenceInstruction}
 CHARACTER DESCRIPTION (preserve these exact details):
 Name: ${characterName}
-Physical Appearance: ${char.appearance || 'Green-skinned goblin woman, petite feminine build'}
-Skin: ${char.body?.skin_tone || `GREEN SKIN - specific hex: ${skinColor} - this is a goblin character`}
-Face: ${char.face?.description || 'Expressive large eyes, small pointed goblin nose, wide expressive mouth, pointed goblin ears'}
-Hair: ${char.hair?.color || 'Dark'} hair, ${char.hair?.style || 'casual/messy style'}
-Build: ${char.body?.build || 'Petite, feminine figure with stylized cartoon proportions'}
-Signature Jewelry: ${acc.jewelry?.earrings || 'Gold hoop earrings'}, ${acc.jewelry?.wrist || 'gold bangles and bracelets on wrists'}
-Clothing Style: ${char.details || 'Casual modern Gen-Z clothing - hoodies, tank tops, comfortable athleisure'}
-Art Style: ${char.visualStyle || '3D Pixar/DreamWorks-quality animated character, smooth surfaces, soft lighting'}
-Color Palette: ${colorPalette.join(', ') || '#8BC34A (green skin), #FFD700 (gold accents), warm earth tones'}
-Expression Style: Highly expressive, emotive, exaggerated cartoon reactions
+Physical Appearance: ${appearance}
+Visual Style: ${visualStyle}
+Art Style: ${artisticStyle}
+Lighting: ${lighting}
+Details: ${details}
+Color Palette: ${colorPalette.join(', ')}
 
-MANDATORY - DO NOT CHANGE:
-- GREEN SKIN TONE (she is a goblin, not a human)
-- Gold jewelry accessories
-- 3D animated cartoon style (Pixar/DreamWorks quality)
-- Consistent facial features across all images`;
+Personality Vibe: ${personality.vibe || 'Extroverted, friendly, animated, and energetic'}
+Emotional Range: ${personality.emotion || 'Wide emotional range - engaged, expressive, passionate'}
+
+MANDATORY STYLE REQUIREMENTS (DO NOT DEVIATE):
+- 2D DIGITAL CARTOON STYLE (clean lines, soft shading - NOT 3D, NOT Pixar, NOT realistic)
+- GREEN GOBLIN SKIN (vibrant green ~#69a86c - she is NOT human)
+- Semi-realistic proportions with stylized fantasy features
+- Small black horns on forehead
+- Pointed ears with large gold dangling earrings (jhumka style)
+- Multiple gold bangles on both wrists
+- Long wavy red/auburn hair
+- Magenta/purple hoodie with "Barbie Rules" text
+- Warm soft lighting with subtle glows
+- Faint sparkles/magical elements in background
+
+PARTNER CHARACTER (if present):
+- Blue-skinned male with dark navy hair
+- Pointed ears, lean build
+- Grey hoodie with "Rick Morty" text
+- More reserved, serious expression
+- Arms often crossed`;
 }
 
 /**
@@ -2188,6 +2187,52 @@ if (hasDatabase) {
     } catch (err) {
       console.error('Error deleting character:', err);
       res.status(500).json({ error: 'Failed to delete character', details: err.message });
+    }
+  });
+
+  // Update character image (re-upload to Cloudinary)
+  app.post('/api/characters/:id/update-image', upload.single('image'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const file = req.file;
+      
+      // Get existing character
+      const character = await db.getCharacter(id);
+      if (!character) {
+        return res.status(404).json({ error: 'Character not found' });
+      }
+      
+      let imageUrl = null;
+      
+      // If file uploaded, process it
+      if (file) {
+        if (hasCloudinary) {
+          imageUrl = await uploadToCloudinary(file.path);
+          console.log('☁️ Character image re-uploaded to Cloudinary:', imageUrl);
+        }
+        // Clean up local file
+        fs.unlink(file.path, () => {});
+      } else if (req.body.imageUrl) {
+        // Allow direct URL update
+        imageUrl = req.body.imageUrl;
+      }
+      
+      if (!imageUrl) {
+        return res.status(400).json({ error: 'No image provided' });
+      }
+      
+      // Update character with new image URL
+      const updatedCharacter = await db.updateCharacterImage(id, imageUrl);
+      
+      res.json({ 
+        success: true, 
+        character: updatedCharacter,
+        imageUrl 
+      });
+    } catch (err) {
+      console.error('Error updating character image:', err);
+      if (req.file?.path) fs.unlink(req.file.path, () => {});
+      res.status(500).json({ error: 'Failed to update character image', details: err.message });
     }
   });
 

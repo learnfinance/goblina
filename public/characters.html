@@ -584,17 +584,21 @@
 
           const card = document.createElement('div');
           card.className = 'character-card';
+          const needsImageUpload = !char.image_url;
           card.innerHTML = `
             <div class="card-image">
               ${char.image_url 
                 ? `<img src="${char.image_url}" alt="${char.name}" />`
-                : '👤'
+                : `<div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <span style="font-size: 3rem;">👤</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">No image saved</span>
+                   </div>`
               }
             </div>
             <div class="card-body">
               <h3>
                 ${char.name}
-                <span class="badge">Analyzed</span>
+                <span class="badge">${char.image_url ? 'Analyzed' : '⚠️ Missing Image'}</span>
               </h3>
               <div class="meta">Created ${createdDate}</div>
               <div class="style-preview">
@@ -603,13 +607,24 @@
                 ).join('')}
                 <span class="style-tag">${visualStyle}</span>
               </div>
+              ${needsImageUpload ? `
+                <div style="margin-bottom: 12px; padding: 8px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; font-size: 0.8rem; color: #ffc107;">
+                  ⚠️ Re-upload image to enable reference-based generation
+                </div>
+              ` : ''}
               <div class="card-actions">
-                <button class="btn btn-secondary btn-sm" onclick="viewCharacter('${char.id}')">
-                  👁️ View
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="useCharacter('${char.id}')">
-                  🎬 Create Content
-                </button>
+                ${needsImageUpload ? `
+                  <button class="btn btn-warning btn-sm" onclick="reuploadCharacterImage('${char.id}', '${char.name}')" style="background: linear-gradient(135deg, #f59e0b, #d97706); flex: 2;">
+                    📤 Re-upload Image
+                  </button>
+                ` : `
+                  <button class="btn btn-secondary btn-sm" onclick="viewCharacter('${char.id}')">
+                    👁️ View
+                  </button>
+                  <button class="btn btn-primary btn-sm" onclick="useCharacter('${char.id}')">
+                    🎬 Create Content
+                  </button>
+                `}
                 <button class="btn btn-danger btn-sm" onclick="deleteCharacter('${char.id}')" title="Delete">
                   🗑️
                 </button>
@@ -787,6 +802,50 @@
         // Store selected character ID in localStorage
         localStorage.setItem('selectedCharacterId', id);
         window.location.href = '/creator.html';
+      }
+
+      // Re-upload Character Image
+      async function reuploadCharacterImage(id, name) {
+        // Create a file input programmatically
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          // Show loading state
+          showToast('📤 Uploading image...', 'success');
+          
+          try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const res = await fetch(`/api/characters/${id}/update-image`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.error || 'Failed to upload image');
+            }
+            
+            const result = await res.json();
+            showToast(`✅ Image uploaded for ${name}!`, 'success');
+            console.log('Character image updated:', result);
+            
+            // Reload characters to show updated card
+            loadCharacters();
+          } catch (err) {
+            console.error('Upload error:', err);
+            showToast('❌ ' + err.message, 'error');
+          }
+        };
+        
+        // Trigger file selection
+        input.click();
       }
 
       // Delete Character
